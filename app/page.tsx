@@ -6,18 +6,54 @@ import { Leaf, Camera, Mic, TrendingUp, CheckCircle, ArrowRight, Star, CloudRain
 import { useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
+function RevealOnScroll({ children, delay = 0, y = 24 }: { children: React.ReactNode; delay?: number; y?: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [ref, setRef] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(ref);
+        }
+      },
+      { threshold: 0.05, rootMargin: "0px 0px -50px 0px" }
+    );
+    observer.observe(ref);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return (
+    <div
+      ref={setRef}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : `translateY(${y}px)`,
+        transition: `opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /* ── bullock cart SVG ── */
 function BullockCartSVG() {
   return (
     <svg viewBox="0 0 500 96" width="500" height="96" aria-hidden>
-      <circle cx="64" cy="70" r="25" fill="none" stroke="#231a13" strokeWidth="3.5"/>
-      <circle cx="64" cy="70" r="5" fill="#231a13"/>
-      <line x1="64" y1="45" x2="64" y2="95" stroke="#231a13" strokeWidth="2"/>
-      <line x1="39" y1="70" x2="89" y2="70" stroke="#231a13" strokeWidth="2"/>
-      <line x1="46" y1="52" x2="82" y2="88" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="82" y1="52" x2="46" y2="88" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="49" y1="48" x2="79" y2="92" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="79" y1="48" x2="49" y2="92" stroke="#231a13" strokeWidth="1.5"/>
+      {/* Group the front wheel and spokes to rotate them */}
+      <g style={{ transformOrigin: "64px 70px", animation: "spinWheel 1s linear infinite" }}>
+        <circle cx="64" cy="70" r="25" fill="none" stroke="#231a13" strokeWidth="3.5"/>
+        <circle cx="64" cy="70" r="5" fill="#231a13"/>
+        <line x1="64" y1="45" x2="64" y2="95" stroke="#231a13" strokeWidth="2"/>
+        <line x1="39" y1="70" x2="89" y2="70" stroke="#231a13" strokeWidth="2"/>
+        <line x1="46" y1="52" x2="82" y2="88" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="82" y1="52" x2="46" y2="88" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="49" y1="48" x2="79" y2="92" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="79" y1="48" x2="49" y2="92" stroke="#231a13" strokeWidth="1.5"/>
+      </g>
       <path d="M 42 48 L 192 48 L 196 73 L 40 73 Z" fill="#231a13"/>
       <rect x="50" y="26" width="5" height="24" rx="1" fill="#231a13"/>
       <rect x="63" y="24" width="5" height="26" rx="1" fill="#231a13"/>
@@ -32,12 +68,15 @@ function BullockCartSVG() {
       <path d="M 166 30 C 177 20 188 12 210 2" stroke="#231a13" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
       <path d="M 148 50 L 140 73" stroke="#231a13" strokeWidth="6" strokeLinecap="round" fill="none"/>
       <path d="M 160 51 L 165 72" stroke="#231a13" strokeWidth="6" strokeLinecap="round" fill="none"/>
-      <circle cx="208" cy="73" r="21" fill="none" stroke="#231a13" strokeWidth="3"/>
-      <circle cx="208" cy="73" r="4" fill="#231a13"/>
-      <line x1="208" y1="52" x2="208" y2="94" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="187" y1="73" x2="229" y2="73" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="193" y1="58" x2="223" y2="88" stroke="#231a13" strokeWidth="1.5"/>
-      <line x1="223" y1="58" x2="193" y2="88" stroke="#231a13" strokeWidth="1.5"/>
+      {/* Group the rear wheel and spokes to rotate them */}
+      <g style={{ transformOrigin: "208px 73px", animation: "spinWheel 0.84s linear infinite" }}>
+        <circle cx="208" cy="73" r="21" fill="none" stroke="#231a13" strokeWidth="3"/>
+        <circle cx="208" cy="73" r="4" fill="#231a13"/>
+        <line x1="208" y1="52" x2="208" y2="94" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="187" y1="73" x2="229" y2="73" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="193" y1="58" x2="223" y2="88" stroke="#231a13" strokeWidth="1.5"/>
+        <line x1="223" y1="58" x2="193" y2="88" stroke="#231a13" strokeWidth="1.5"/>
+      </g>
       <path d="M 194 65 L 256 59" stroke="#231a13" strokeWidth="3.5" strokeLinecap="round"/>
       <line x1="256" y1="51" x2="256" y2="67" stroke="#231a13" strokeWidth="3.5"/>
       <line x1="256" y1="53" x2="282" y2="51" stroke="#231a13" strokeWidth="2"/>
@@ -77,6 +116,117 @@ function LoadingScreen({ show }: { show: boolean }) {
         @keyframes agriCart { from{transform:translateX(-560px)}to{transform:translateX(110vw)} }
         @keyframes agriFade { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
         @keyframes agriBar  { from{width:0%}to{width:100%} }
+        @keyframes floatCard { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes floatImage { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes heroSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 6px 24px rgba(196,80,26,0.3), 0 0 0 rgba(196,80,26,0); }
+          50% { box-shadow: 0 10px 32px rgba(196,80,26,0.5), 0 0 16px rgba(196,80,26,0.35); }
+        }
+        @keyframes spinWheel {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes floatGlow1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(25px, -15px) scale(1.08); }
+        }
+        @keyframes floatGlow2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-15px, 20px) scale(1.05); }
+        }
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes leafSway {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(15deg); }
+        }
+        @keyframes ctaGradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .nav-link {
+          transition: all 0.25s ease !important;
+        }
+        .nav-link:hover {
+          color: #c4501a !important;
+          transform: translateY(-1px) scale(1.05);
+        }
+        .btn-pulse {
+          animation: glowPulse 2.5s infinite ease-in-out;
+          transition: all 0.3s ease !important;
+        }
+        .btn-pulse:hover {
+          transform: translateY(-2px) scale(1.04) !important;
+          opacity: 0.95;
+        }
+        .btn-secondary-hover {
+          transition: all 0.3s ease !important;
+        }
+        .btn-secondary-hover:hover {
+          transform: translateY(-2px) scale(1.03) !important;
+          background: rgba(196,80,26,0.06) !important;
+        }
+        .feature-card {
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .feature-card:hover {
+          transform: translateY(-8px) scale(1.02) !important;
+          border-color: #c4501a !important;
+        }
+        .feature-card:hover .feature-icon-wrapper {
+          transform: scale(1.12) translateY(-2px);
+          box-shadow: 0 4px 12px rgba(196,80,26,0.15);
+        }
+        .stat-card {
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          padding: 12px;
+          border-radius: 12px;
+        }
+        .stat-card:hover {
+          transform: translateY(-5px) scale(1.05) !important;
+          background: rgba(196,80,26,0.05) !important;
+          box-shadow: 0 10px 30px rgba(196,80,26,0.06);
+        }
+        .hero-img-container {
+          animation: floatImage 6s infinite ease-in-out;
+          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .hero-diag-card {
+          animation: floatCard 4s infinite ease-in-out;
+        }
+        .hero-glow-1 {
+          animation: floatGlow1 8s infinite ease-in-out;
+        }
+        .hero-glow-2 {
+          animation: floatGlow2 10s infinite ease-in-out;
+        }
+        .animated-gradient-crisis {
+          background: linear-gradient(135deg, #c4501a, #e67e22, #c4501a);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientFlow 4s linear infinite;
+        }
+        .animated-gradient-profit {
+          background: linear-gradient(135deg, #436464, #70a1a1, #456348);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientFlow 5s linear infinite;
+        }
+        .logo-container:hover .logo-leaf {
+          animation: leafSway 0.6s ease-in-out;
+        }
+        .cta-section {
+          background: linear-gradient(270deg, #140a04, #2d170a, #140a04) !important;
+          background-size: 400% 400% !important;
+          animation: ctaGradient 12s ease infinite !important;
+        }
       `}</style>
       <div style={{ position:"fixed",inset:0,zIndex:200,overflow:"hidden", opacity:show?1:0, transition:"opacity 0.9s ease", pointerEvents:show?"all":"none" }}>
         <div style={{ position:"absolute",inset:0, background:"linear-gradient(to bottom,#f06830 0%,#c84010 32%,#8c1e06 60%,#3a0e02 80%,#180600 100%)" }}/>
@@ -145,13 +295,13 @@ export default function Landing() {
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:100, borderBottom:scrolled?`1px solid ${d.border}`:"none", background:scrolled?(isDark?"rgba(28,16,9,0.96)":"rgba(255,248,245,0.96)"):"transparent", backdropFilter:scrolled?"blur(16px)":"none", transition:"all 0.3s" }}>
         <div style={{ maxWidth:1280,margin:"0 auto",padding:"0 32px",height:68,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:9 }}>
-            <div style={{ width:32,height:32,borderRadius:9,background:"#c4501a",display:"flex",alignItems:"center",justifyContent:"center" }}><Leaf size={15} color="#fff"/></div>
+          <div className="logo-container" style={{ display:"flex",alignItems:"center",gap:9, cursor:"pointer" }}>
+            <div className="logo-leaf" style={{ width:32,height:32,borderRadius:9,background:"#c4501a",display:"flex",alignItems:"center",justifyContent:"center", transition:"transform 0.3s ease" }}><Leaf size={15} color="#fff"/></div>
             <span style={{ fontFamily:PJS,fontWeight:800,fontSize:19,color:d.text,letterSpacing:"-0.01em" }}>AgriGuard</span>
           </div>
           <div className="hidden md:flex" style={{ gap:28,alignItems:"center" }}>
             {["Features","How It Works","Markets"].map(l => (
-              <a key={l} href={`#${l.toLowerCase().replace(" ","-")}`} style={{ fontFamily:MRP,fontWeight:600,fontSize:14,color:d.textMuted,textDecoration:"none" }}>{l}</a>
+              <a key={l} href={`#${l.toLowerCase().replace(" ","-")}`} className="nav-link" style={{ fontFamily:MRP,fontWeight:600,fontSize:14,color:d.textMuted,textDecoration:"none" }}>{l}</a>
             ))}
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
@@ -175,10 +325,10 @@ export default function Landing() {
       <section style={{ position:"relative", overflow:"hidden" }}>
 
         {/* soft warm glow — sits behind content */}
-        <div style={{ position:"absolute", top:-100, left:-80, width:560, height:560, borderRadius:"50%", zIndex:0, pointerEvents:"none",
+        <div className="hero-glow-1" style={{ position:"absolute", top:-100, left:-80, width:560, height:560, borderRadius:"50%", zIndex:0, pointerEvents:"none",
           background:"radial-gradient(circle, rgba(196,80,26,0.08) 0%, transparent 70%)" }}/>
         {/* soft teal glow — sits behind content */}
-        <div style={{ position:"absolute", bottom:-80, right:-60, width:480, height:480, borderRadius:"50%", zIndex:0, pointerEvents:"none",
+        <div className="hero-glow-2" style={{ position:"absolute", bottom:-80, right:-60, width:480, height:480, borderRadius:"50%", zIndex:0, pointerEvents:"none",
           background:"radial-gradient(circle, rgba(67,100,100,0.07) 0%, transparent 70%)" }}/>
 
         {/* ── content at z-index 1 ── */}
@@ -192,21 +342,21 @@ export default function Landing() {
                 <span style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:"#c4501a",letterSpacing:"0.1em",textTransform:"uppercase" }}>Zero Cost · AI-Powered · 12+ Languages</span>
               </div>
 
-              <h1 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(38px,6.5vw,64px)",lineHeight:1.0,letterSpacing:"-0.025em",color:d.text,margin:"0 0 20px" }}>
-                From <span style={{ color:"#c4501a" }}>Crisis</span><br/>
-                to <span style={{ backgroundImage:"linear-gradient(135deg,#436464,#456348)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>Profit</span><br/>
+              <h1 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(38px,6.5vw,64px)",lineHeight:1.0,letterSpacing:"-0.025em",color:d.text,margin:"0 0 20px", animation: "heroSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both" }}>
+                From <span className="animated-gradient-crisis">Crisis</span><br/>
+                to <span className="animated-gradient-profit">Profit</span><br/>
                 in Seconds.
               </h1>
 
-              <p style={{ fontFamily:MRP,fontSize:16,lineHeight:1.7,color:d.textSub,margin:"0 0 28px",maxWidth:440 }}>
+              <p style={{ fontFamily:MRP,fontSize:16,lineHeight:1.7,color:d.textSub,margin:"0 0 28px",maxWidth:440, animation: "heroSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both" }}>
                 Your AI farming companion that diagnoses crop diseases instantly, gives weather-smart treatment plans in your language, and finds you the best mandi price — completely free.
               </p>
 
-              <div style={{ display:"flex",flexWrap:"wrap",gap:12,marginBottom:32 }}>
-                <button onClick={() => router.push("/signup")} style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 26px",borderRadius:8,background:"#c4501a",color:"#fff",fontFamily:PJS,fontWeight:700,fontSize:15,border:"none",cursor:"pointer",boxShadow:"0 6px 24px rgba(196,80,26,0.3)" }}>
+              <div style={{ display:"flex",flexWrap:"wrap",gap:12,marginBottom:32, animation: "heroSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both" }}>
+                <button onClick={() => router.push("/signup")} className="btn-pulse" style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 26px",borderRadius:8,background:"#c4501a",color:"#fff",fontFamily:PJS,fontWeight:700,fontSize:15,border:"none",cursor:"pointer",boxShadow:"0 6px 24px rgba(196,80,26,0.3)" }}>
                   <Camera size={16}/>Scan Your Crop Free
                 </button>
-                <button onClick={() => router.push("/login")} style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 22px",borderRadius:8,background:"transparent",color:d.text,fontFamily:PJS,fontWeight:600,fontSize:15,border:`1.5px solid ${d.border}`,cursor:"pointer" }}>
+                <button onClick={() => router.push("/login")} className="btn-secondary-hover" style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 22px",borderRadius:8,background:"transparent",color:d.text,fontFamily:PJS,fontWeight:600,fontSize:15,border:`1.5px solid ${d.border}`,cursor:"pointer" }}>
                   Watch Demo<ArrowRight size={15}/>
                 </button>
               </div>
@@ -225,7 +375,7 @@ export default function Landing() {
             </div>
 
             {/* right — produce image with floating card */}
-            <div style={{ position:"relative", borderRadius:20, overflow:"hidden", border:`1px solid ${d.border}`, boxShadow:shadow(isDark,3) }}>
+            <div className="hero-img-container" style={{ position:"relative", borderRadius:20, overflow:"hidden", border:`1px solid ${d.border}`, boxShadow:shadow(isDark,3), animation: "heroSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both" }}>
               <img
                 src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=680&h=460&fit=crop&auto=format"
                 alt="Fresh farm produce — vegetables and crops"
@@ -233,7 +383,7 @@ export default function Landing() {
               />
               <div style={{ position:"absolute",inset:0,background:`linear-gradient(to top,${d.bg} 0%,transparent 50%)` }}/>
               {/* floating diagnosis card */}
-              <div style={{ position:"absolute",bottom:20,left:16,right:16,background:isDark?"rgba(38,28,19,0.96)":"rgba(255,255,255,0.97)",backdropFilter:"blur(14px)",border:`1px solid ${d.border}`,borderRadius:14,padding:"14px 18px",boxShadow:shadow(isDark,2) }}>
+              <div className="hero-diag-card" style={{ position:"absolute",bottom:20,left:16,right:16,background:isDark?"rgba(38,28,19,0.96)":"rgba(255,255,255,0.97)",backdropFilter:"blur(14px)",border:`1px solid ${d.border}`,borderRadius:14,padding:"14px 18px",boxShadow:shadow(isDark,2) }}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <div>
                     <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:3 }}>
@@ -267,53 +417,69 @@ export default function Landing() {
       <div style={{ borderTop:`1px solid ${d.border}`,borderBottom:`1px solid ${d.border}`,background:isDark?"rgba(38,28,19,0.5)":"rgba(254,234,222,0.5)" }}>
         <div style={{ maxWidth:1280,margin:"0 auto",padding:"24px 32px",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:16 }}>
           {[["30s","Detection time","vs 3 days before"],["40%","Less crop loss","from early diagnosis"],["30%","Higher earnings","with mandi prices"],["96%","AI accuracy","on 50+ crops"]].map(([v,l,s],i) => (
-            <div key={i} style={{ textAlign:"center" }}>
-              <p style={{ fontFamily:PJS,fontWeight:800,fontSize:28,color:"#c4501a",margin:0 }}>{v}</p>
-              <p style={{ fontFamily:MRP,fontWeight:600,fontSize:13,color:d.text,margin:"2px 0 0" }}>{l}</p>
-              <p style={{ fontFamily:MRP,fontSize:11,color:d.textMuted,margin:"1px 0 0" }}>{s}</p>
-            </div>
+            <RevealOnScroll key={i} delay={i * 0.08} y={16}>
+              <div className="stat-card" style={{ textAlign:"center", cursor: "pointer" }}>
+                <p style={{ fontFamily:PJS,fontWeight:800,fontSize:28,color:"#c4501a",margin:0 }}>{v}</p>
+                <p style={{ fontFamily:MRP,fontWeight:600,fontSize:13,color:d.text,margin:"2px 0 0" }}>{l}</p>
+                <p style={{ fontFamily:MRP,fontSize:11,color:d.textMuted,margin:"1px 0 0" }}>{s}</p>
+              </div>
+            </RevealOnScroll>
           ))}
         </div>
       </div>
 
       {/* FEATURES */}
       <section id="features" style={{ maxWidth:1280,margin:"0 auto",padding:"80px 32px" }}>
-        <div style={{ textAlign:"center",marginBottom:52 }}>
-          <p style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:"#c4501a",letterSpacing:"0.12em",textTransform:"uppercase",margin:"0 0 10px" }}>The See–Predict–Earn Workflow</p>
-          <h2 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(28px,4vw,40px)",letterSpacing:"-0.01em",color:d.text,margin:0 }}>Three Tools. One Mission.</h2>
-        </div>
+        <RevealOnScroll>
+          <div style={{ textAlign:"center",marginBottom:52 }}>
+            <p style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:"#c4501a",letterSpacing:"0.12em",textTransform:"uppercase",margin:"0 0 10px" }}>The See–Predict–Earn Workflow</p>
+            <h2 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(28px,4vw,40px)",letterSpacing:"-0.01em",color:d.text,margin:0 }}>Three Tools. One Mission.</h2>
+          </div>
+        </RevealOnScroll>
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20 }}>
           {FEATURES.map((f,i) => (
-            <div key={i} style={{ padding:28,borderRadius:16,border:`1px solid ${d.border}`,background:d.card,boxShadow:shadow(isDark,1) }}>
-              <div style={{ display:"inline-flex",alignItems:"center",gap:7,padding:"4px 12px",borderRadius:999,background:`${f.color}14`,border:`1px solid ${f.color}30`,marginBottom:18 }}>
-                <f.icon size={13} color={f.color}/>
-                <span style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:f.color,textTransform:"uppercase",letterSpacing:"0.08em" }}>{f.tag}</span>
-              </div>
-              <h3 style={{ fontFamily:PJS,fontWeight:700,fontSize:18,color:d.text,margin:"0 0 10px" }}>{f.title}</h3>
-              <p style={{ fontFamily:MRP,fontSize:14,color:d.textSub,lineHeight:1.6,margin:"0 0 18px" }}>{f.desc}</p>
-              {f.bullets.map((b,j) => (
-                <div key={j} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:j<f.bullets.length-1?8:0 }}>
-                  <CheckCircle size={13} color={f.color}/>
-                  <span style={{ fontFamily:MRP,fontWeight:600,fontSize:13,color:d.text }}>{b}</span>
+            <RevealOnScroll key={i} delay={i * 0.15}>
+              <div className="feature-card" style={{ padding:28,borderRadius:16,border:`1px solid ${d.border}`,background:d.card,boxShadow:shadow(isDark,1), cursor: "pointer" }}>
+                <div className="feature-icon-wrapper" style={{ display:"inline-flex",alignItems:"center",gap:7,padding:"4px 12px",borderRadius:999,background:`${f.color}14`,border:`1px solid ${f.color}30`,marginBottom:18, transition:"all 0.3s ease" }}>
+                  <f.icon size={13} color={f.color}/>
+                  <span style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:f.color,textTransform:"uppercase",letterSpacing:"0.08em" }}>{f.tag}</span>
                 </div>
-              ))}
-            </div>
+                <h3 style={{ fontFamily:PJS,fontWeight:700,fontSize:18,color:d.text,margin:"0 0 10px" }}>{f.title}</h3>
+                <p style={{ fontFamily:MRP,fontSize:14,color:d.textSub,lineHeight:1.6,margin:"0 0 18px" }}>{f.desc}</p>
+                {f.bullets.map((b,j) => (
+                  <div key={j} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:j<f.bullets.length-1?8:0 }}>
+                    <CheckCircle size={13} color={f.color}/>
+                    <span style={{ fontFamily:MRP,fontWeight:600,fontSize:13,color:d.text }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </RevealOnScroll>
           ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ background:isDark?"#140a04":"#231a13",padding:"72px 32px",textAlign:"center" }}>
-        <p style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:"rgba(255,181,153,0.7)",letterSpacing:"0.12em",textTransform:"uppercase",margin:"0 0 14px" }}>Free. Forever. For Every Farmer.</p>
-        <h2 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(28px,4vw,44px)",letterSpacing:"-0.02em",color:"#fff8f5",margin:"0 0 14px" }}>Your farm deserves smarter tools.</h2>
-        <p style={{ fontFamily:MRP,fontSize:16,color:"rgba(255,248,245,0.6)",margin:"0 0 32px",maxWidth:440,marginLeft:"auto",marginRight:"auto" }}>
-          Join 2,40,000+ farmers already protecting their crops and earning more.
-        </p>
-        <div style={{ display:"flex",flexWrap:"wrap",gap:12,justifyContent:"center" }}>
-          <button onClick={() => router.push("/signup")} style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 28px",borderRadius:8,background:"#c4501a",color:"#fff",fontFamily:PJS,fontWeight:700,fontSize:15,border:"none",cursor:"pointer",boxShadow:"0 6px 24px rgba(196,80,26,0.35)" }}>
-            Create Free Account<ArrowRight size={15}/>
-          </button>
-          <button onClick={() => router.push("/login")} style={{ padding:"13px 24px",borderRadius:8,background:"transparent",color:"rgba(255,248,245,0.8)",fontFamily:PJS,fontWeight:600,fontSize:15,border:"1.5px solid rgba(255,248,245,0.2)",cursor:"pointer" }}>Sign In</button>
+      <section className="cta-section" style={{ background:isDark?"#140a04":"#231a13",padding:"72px 32px",textAlign:"center", position:"relative", overflow:"hidden" }}>
+        {/* Soft background aura inside CTA */}
+        <div style={{ position:"absolute", top:"-50%", left:"-30%", width:360, height:360, borderRadius:"50%", zIndex:0, pointerEvents:"none",
+          background:"radial-gradient(circle, rgba(196,80,26,0.1) 0%, transparent 70%)" }}/>
+        <div style={{ position:"absolute", bottom:"-50%", right:"-20%", width:420, height:420, borderRadius:"50%", zIndex:0, pointerEvents:"none",
+          background:"radial-gradient(circle, rgba(67,100,100,0.08) 0%, transparent 70%)" }}/>
+        
+        <div style={{ position:"relative", zIndex:1 }}>
+          <RevealOnScroll>
+            <p style={{ fontFamily:MRP,fontWeight:700,fontSize:11,color:"rgba(255,181,153,0.7)",letterSpacing:"0.12em",textTransform:"uppercase",margin:"0 0 14px" }}>Free. Forever. For Every Farmer.</p>
+            <h2 style={{ fontFamily:PJS,fontWeight:800,fontSize:"clamp(28px,4vw,44px)",letterSpacing:"-0.02em",color:"#fff8f5",margin:"0 0 14px" }}>Your farm deserves smarter tools.</h2>
+            <p style={{ fontFamily:MRP,fontSize:16,color:"rgba(255,248,245,0.6)",margin:"0 0 32px",maxWidth:440,marginLeft:"auto",marginRight:"auto" }}>
+              Join 2,40,000+ farmers already protecting their crops and earning more.
+            </p>
+            <div style={{ display:"flex",flexWrap:"wrap",gap:12,justifyContent:"center" }}>
+              <button onClick={() => router.push("/signup")} className="btn-pulse" style={{ display:"flex",alignItems:"center",gap:8,padding:"13px 28px",borderRadius:8,background:"#c4501a",color:"#fff",fontFamily:PJS,fontWeight:700,fontSize:15,border:"none",cursor:"pointer",boxShadow:"0 6px 24px rgba(196,80,26,0.35)" }}>
+                Create Free Account<ArrowRight size={15}/>
+              </button>
+              <button onClick={() => router.push("/login")} className="btn-secondary-hover" style={{ padding:"13px 24px",borderRadius:8,background:"transparent",color:"rgba(255,248,245,0.8)",fontFamily:PJS,fontWeight:600,fontSize:15,border:"1.5px solid rgba(255,248,245,0.2)",cursor:"pointer" }}>Sign In</button>
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
