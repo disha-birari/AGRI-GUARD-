@@ -2,13 +2,11 @@
 
 import { useState, useEffect, type ElementType, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { CloudRain, Wind, Droplets, Sun, AlertTriangle, CheckCircle, Thermometer, RefreshCw, Map, MapPin, Mic, Ban, ShieldCheck, ArrowRight } from "lucide-react";
+import { CloudRain, Wind, Droplets, Sun, Thermometer, RefreshCw, Map, MapPin, Mic, Ban, ShieldCheck } from "lucide-react";
 import { useTheme, useAuth } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
 const ICONS: Record<string, ElementType> = { sun: Sun, cloud: Droplets, rain: CloudRain };
-const SEV_COLORS: Record<string, string> = { high: "#ba1a1a", medium: "#c4501a", low: "#456348" };
-const SEV_BG: Record<string, string> = { high: "rgba(186,26,26,0.08)", medium: "rgba(196,80,26,0.08)", low: "rgba(69,99,72,0.08)" };
 
 const COORDINATES: Record<string, { lat: number; lon: number; state: string }> = {
   Nashik: { lat: 19.9975, lon: 73.7898, state: "Maharashtra" },

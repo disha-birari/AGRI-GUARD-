@@ -154,6 +154,43 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // If farmer is creating a new direct harvest batch
+    if (body.action === "create_batch") {
+      const newBatch: DirectHarvestBatch = {
+        id: `batch-${Date.now()}`,
+        farmerId: body.farmerId || "f-user",
+        farmerName: body.farmerName || "Farmer",
+        farmerVillage: body.farmerVillage || "Nashik Rural",
+        farmerDistrict: body.farmerDistrict || "Nashik",
+        farmerPhone: body.farmerPhone || "+91 98765 43210",
+        crop: body.crop || "Fresh Produce",
+        variety: body.variety || "Local High-Yield",
+        harvestSchedule: body.harvestSchedule || "Tomorrow Morning",
+        hoursFromHarvest: body.hoursFromHarvest || 8,
+        availableKg: Number(body.availableKg) || 500,
+        minOrderKg: Number(body.minOrderKg) || 5,
+        farmerPricePerKg: Number(body.farmerPricePerKg) || 30,
+        mandiDistressPricePerKg: Number(body.mandiDistressPricePerKg) || 12,
+        supermarketPricePerKg: Number(body.supermarketPricePerKg) || 55,
+        bioCertification: body.bioCertification || "100% Organic",
+        pesticideFreeDays: Number(body.pesticideFreeDays) || 30,
+        rating: 5.0,
+        reviewsCount: 1,
+        image: body.image || "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop",
+        societyGroupDiscountPercent: Number(body.societyGroupDiscountPercent) || 10
+      };
+
+      LIVE_HARVEST_BATCHES.unshift(newBatch);
+
+      return NextResponse.json({
+        success: true,
+        message: "Harvest batch listed successfully for direct consumer pre-orders!",
+        batch: newBatch
+      });
+    }
+
+    // Customer pre-order placement
     const { batchId, customerName, customerPhone, customerAddress, orderKg, isSocietyGroupOrder } = body;
 
     if (!batchId || !orderKg || orderKg <= 0) {

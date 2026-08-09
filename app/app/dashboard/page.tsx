@@ -128,7 +128,7 @@ export default function MainDashboard() {
       </div>
 
       {/* ── FLOWCHART 3 PRIMARY PATHWAYS ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 22 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 20 }}>
         {flowchartBranches.map((b) => (
           <div 
             key={b.title} 
@@ -183,6 +183,89 @@ export default function MainDashboard() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* ── REAL-WORLD AGRI-GUARD BREAKTHROUGHS ── */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+            ⚡ Advanced Enterprise & Community Tools
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+          {[
+            {
+              title: "Kisan-to-Kitchen",
+              tag: "Direct Sale",
+              desc: "Sell direct to consumers at +168% higher margins.",
+              path: "/app/direct",
+              col: "#456348"
+            },
+            {
+              title: "Glut Early Warning",
+              tag: "AI Predictor",
+              desc: "14-day advance crash alerts & cold storage booking.",
+              path: "/app/glut-forecast",
+              col: "#ba1a1a"
+            },
+            {
+              title: "Krishi-Share Rental",
+              tag: "P2P Machinery",
+              desc: "Rent tractors, harvesters & drones on-demand.",
+              path: "/app/machinery",
+              col: "#c4501a"
+            },
+            {
+              title: "Smart Drip Ledger",
+              tag: "FAO-56 ET",
+              desc: "Precision irrigation schedule saving 42% water.",
+              path: "/app/irrigation",
+              col: "#436464"
+            },
+            {
+              title: "PMFBY Loss Claim",
+              tag: "Crisis Shield",
+              desc: "Instant claim dossiers for hailstorm & flood damage.",
+              path: "/app/insurance",
+              col: "#8b5e3c"
+            },
+          ].map((tool, idx) => (
+            <div
+              key={idx}
+              onClick={() => router.push(tool.path)}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                background: d.card,
+                border: `1px solid ${d.border}`,
+                boxShadow: shadow(isDark, 1),
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between"
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = tool.col; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = d.border; }}
+            >
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontFamily: MRP, fontWeight: 800, fontSize: 10, color: tool.col, background: `${tool.col}18`, padding: "2px 7px", borderRadius: 4, textTransform: "uppercase" }}>
+                    {tool.tag}
+                  </span>
+                  <ArrowRight size={13} color={tool.col} />
+                </div>
+                <h3 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 14, color: d.text, margin: "0 0 4px" }}>
+                  {tool.title}
+                </h3>
+                <p style={{ fontFamily: MRP, fontSize: 11, color: d.textSub, margin: 0, lineHeight: 1.4 }}>
+                  {tool.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── LIVE RADAR & TELEMETRY ROW ── */}

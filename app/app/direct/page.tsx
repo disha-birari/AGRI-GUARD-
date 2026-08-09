@@ -28,6 +28,16 @@ export default function DirectMarketplacePage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderReceipt, setOrderReceipt] = useState<any | null>(null);
 
+  // Farmer Listing Form State
+  const [isListingModalOpen, setIsListingModalOpen] = useState(false);
+  const [newCrop, setNewCrop] = useState("Tomatoes");
+  const [newVariety, setNewVariety] = useState("Abhinav F1 Fresh");
+  const [newAvailableKg, setNewAvailableKg] = useState(500);
+  const [newFarmerPrice, setNewFarmerPrice] = useState(25);
+  const [newSupermarketPrice, setNewSupermarketPrice] = useState(48);
+  const [newBioCert, setNewBioCert] = useState<"100% Organic" | "Low-Residue Bio-Input" | "Natural Farming (SPNF)">("100% Organic");
+  const [newHarvestSchedule, setNewHarvestSchedule] = useState("Tomorrow, 6:00 AM");
+
   const fetchBatches = async () => {
     setLoading(true);
     try {
@@ -46,6 +56,49 @@ export default function DirectMarketplacePage() {
   useEffect(() => {
     fetchBatches();
   }, [filterCrop, organicOnly]);
+
+  const handleCreateBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_batch",
+          farmerId: user?.id || "f-1",
+          farmerName: user?.name || "Ramesh Kumar",
+          farmerVillage: user?.village || "Nashik Rural",
+          farmerDistrict: user?.district || "Nashik",
+          farmerPhone: user?.phone || "+91 98231 44520",
+          crop: newCrop,
+          variety: newVariety,
+          harvestSchedule: newHarvestSchedule,
+          availableKg: newAvailableKg,
+          minOrderKg: 5,
+          farmerPricePerKg: newFarmerPrice,
+          mandiDistressPricePerKg: Math.round(newFarmerPrice * 0.45),
+          supermarketPricePerKg: newSupermarketPrice,
+          bioCertification: newBioCert,
+          pesticideFreeDays: 40,
+          image: newCrop.toLowerCase().includes("onion") 
+            ? "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=600&auto=format&fit=crop"
+            : newCrop.toLowerCase().includes("grape")
+            ? "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=600&auto=format&fit=crop"
+            : "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop",
+          societyGroupDiscountPercent: 10
+        })
+      });
+      if (res.ok) {
+        setIsListingModalOpen(false);
+        await fetchBatches();
+      }
+    } catch (err) {
+      console.error("Failed to create batch", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,19 +132,43 @@ export default function DirectMarketplacePage() {
   return (
     <div>
       {/* Header Banner */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, background: "rgba(69,99,72,0.1)", border: "1px solid rgba(69,99,72,0.25)", marginBottom: 8 }}>
-          <Sparkles size={13} color="#456348" />
-          <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: "#456348", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Enterprise Breakthrough: Kisan-to-Kitchen Direct
-          </span>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, background: "rgba(69,99,72,0.1)", border: "1px solid rgba(69,99,72,0.25)", marginBottom: 8 }}>
+            <Sparkles size={13} color="#456348" />
+            <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: "#456348", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Enterprise Breakthrough: Kisan-to-Kitchen Direct
+            </span>
+          </div>
+          <h1 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 26, color: d.text, margin: "0 0 6px" }}>
+            🌱 Kisan-to-Kitchen — Direct Farm Pre-Order Marketplace
+          </h1>
+          <p style={{ fontFamily: MRP, fontSize: 14, color: d.textMuted, margin: 0 }}>
+            Direct farm-to-doorstep connect. Farmers get <strong>+168% higher earnings</strong> than mandi distress rates, and consumers get <strong>farm-fresh produce 38% cheaper</strong> than supermarkets.
+          </p>
         </div>
-        <h1 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 26, color: d.text, margin: "0 0 6px" }}>
-          🌱 Kisan-to-Kitchen — Direct Farm Pre-Order Marketplace
-        </h1>
-        <p style={{ fontFamily: MRP, fontSize: 14, color: d.textMuted, margin: 0 }}>
-          Direct farm-to-doorstep connect. Farmers get <strong>+168% higher earnings</strong> than mandi distress rates, and consumers get <strong>farm-fresh produce 38% cheaper</strong> than supermarkets.
-        </p>
+
+        {/* Farmer Action Button */}
+        <button
+          onClick={() => setIsListingModalOpen(true)}
+          style={{
+            padding: "10px 18px",
+            borderRadius: 10,
+            background: "#456348",
+            color: "#fff",
+            border: "none",
+            fontFamily: PJS,
+            fontWeight: 800,
+            fontSize: 13,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            boxShadow: shadow(isDark, 1)
+          }}
+        >
+          <Leaf size={16} />+ List My Harvest (Farmer)
+        </button>
       </div>
 
       {/* Impact Stats Row */}
@@ -338,6 +415,73 @@ export default function DirectMarketplacePage() {
             <button onClick={() => setOrderReceipt(null)} style={{ width: "100%", padding: "11px", borderRadius: 8, background: "#456348", color: "#fff", border: "none", fontFamily: PJS, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
               Done & Return to Market
             </button>
+          </div>
+        </div>
+      )}
+      {/* Farmer Create Batch Listing Modal */}
+      {isListingModalOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
+          <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 18, width: "100%", maxWidth: 500, padding: 24, boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+              <div>
+                <span style={{ fontFamily: MRP, fontWeight: 800, fontSize: 10, color: "#456348", textTransform: "uppercase" }}>Farmer Direct Listing</span>
+                <h2 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 19, color: d.text, margin: "2px 0 0" }}>List Fresh Harvest Batch</h2>
+                <p style={{ fontFamily: MRP, fontSize: 12, color: d.textMuted, margin: 0 }}>Sell directly to households & societies at premium price</p>
+              </div>
+              <button onClick={() => setIsListingModalOpen(false)} style={{ background: "transparent", border: "none", color: d.textMuted, fontSize: 18, cursor: "pointer" }}>✕</button>
+            </div>
+
+            <form onSubmit={handleCreateBatch} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Crop Name</label>
+                  <input type="text" value={newCrop} onChange={e => setNewCrop(e.target.value)} required placeholder="e.g. Tomatoes" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Variety / Quality</label>
+                  <input type="text" value={newVariety} onChange={e => setNewVariety(e.target.value)} required placeholder="e.g. Abhinav F1" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Harvest Quantity (kg)</label>
+                  <input type="number" min={50} max={10000} value={newAvailableKg} onChange={e => setNewAvailableKg(+e.target.value)} required style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Your Price / kg (₹)</label>
+                  <input type="number" min={5} max={500} value={newFarmerPrice} onChange={e => setNewFarmerPrice(+e.target.value)} required style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Supermarket Retail Price (₹)</label>
+                  <input type="number" min={10} max={1000} value={newSupermarketPrice} onChange={e => setNewSupermarketPrice(+e.target.value)} required style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Bio / Farming Type</label>
+                  <select value={newBioCert} onChange={e => setNewBioCert(e.target.value as any)} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }}>
+                    <option>100% Organic</option>
+                    <option>Natural Farming (SPNF)</option>
+                    <option>Low-Residue Bio-Input</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted }}>Harvest Schedule Window</label>
+                <input type="text" value={newHarvestSchedule} onChange={e => setNewHarvestSchedule(e.target.value)} required placeholder="e.g. Tomorrow, 6:00 AM" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 13, marginTop: 4, boxSizing: "border-box" }} />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={submitting}
+                style={{ marginTop: 6, width: "100%", padding: "11px", borderRadius: 8, background: "#456348", color: "#fff", border: "none", fontFamily: PJS, fontWeight: 800, fontSize: 13, cursor: "pointer" }}
+              >
+                {submitting ? "Publishing Batch..." : "Publish Harvest for Direct Pre-Orders →"}
+              </button>
+            </form>
           </div>
         </div>
       )}

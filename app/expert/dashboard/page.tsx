@@ -87,10 +87,15 @@ export default function ExpertDashboard() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
+      {loading ? (
+        <div style={{ padding: "40px 0", textAlign: "center" }}>
+          <p style={{ fontFamily: MRP, color: d.textMuted }}>Loading queries from farmers across India...</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
 
-        {/* Pending queue */}
-        <Card d={d} isDark={isDark}>
+          {/* Pending queue */}
+          <Card d={d} isDark={isDark}>
           <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 16px" }}>Pending Reviews ({pending.length})</p>
           {pending.length === 0 && (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
@@ -178,6 +183,7 @@ export default function ExpertDashboard() {
           </Card>
         )}
       </div>
+      )}
     </div>
   );
 }

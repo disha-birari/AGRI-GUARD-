@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Leaf, Camera, Mic, TrendingUp, CheckCircle, ArrowRight, Star, CloudRain, IndianRupee, Menu, X, Sun, Moon } from "lucide-react";
+import { Leaf, Camera, Mic, TrendingUp, CheckCircle, ArrowRight, Star, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
 

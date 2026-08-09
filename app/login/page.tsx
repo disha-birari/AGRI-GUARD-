@@ -86,11 +86,11 @@ export default function Login() {
     }
   };
 
-  const demoLogin = (role: "farmer" | "expert" | "admin") => {
+  const demoLogin = (role: "farmer" | "expert" | "admin" | "buyer") => {
     setLoading(true);
     setTimeout(() => {
       login(DEMO_USERS[role]);
-      const dest = role === "expert" ? "/expert/dashboard" : role === "admin" ? "/admin/dashboard" : "/app/dashboard";
+      const dest = role === "expert" ? "/expert/dashboard" : role === "admin" ? "/admin/dashboard" : role === "buyer" ? "/app/direct" : "/app/dashboard";
       router.push(dest);
     }, 600);
   };
@@ -201,8 +201,9 @@ export default function Login() {
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {[
               { role: "farmer" as const, label: "👨‍🌾  Demo as Farmer", color: "#c4501a", sub: "Ramesh Kumar · Nashik, MH" },
+              { role: "buyer"  as const, label: "🛒  Demo as Consumer / Buyer", color: "#456348", sub: "Ananya Deshmukh · Direct Farm Market" },
               { role: "expert" as const, label: "🔬  Demo as Expert", color: "#436464", sub: "Dr. Priya Sharma · Agronomist" },
-              { role: "admin"  as const, label: "⚙️   Demo as Admin",  color: "#456348", sub: "Admin User · Full Access" },
+              { role: "admin"  as const, label: "⚙️   Demo as Admin",  color: "#8b5e3c", sub: "Admin User · Full Access" },
             ].map(({ role, label, color, sub }) => (
               <button key={role} onClick={() => demoLogin(role)} disabled={loading} style={{ padding: "11px 14px", borderRadius: 9, border: `1.5px solid ${color}30`, background: `${color}08`, cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
                 onMouseEnter={e => (e.currentTarget.style.background = `${color}14`)}

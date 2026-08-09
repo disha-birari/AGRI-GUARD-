@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Camera, Mic, CloudRain, IndianRupee,
   History, Bell, User, LogOut, Menu, X, Sun, Moon,
   Leaf, ChevronDown, ShieldCheck, Settings, Users,
-  ShoppingBag, TrendingDown, Tractor, Droplets, ShieldAlert, Sparkles
+  ShoppingBag, TrendingDown, Tractor, Droplets, ShieldAlert
 } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";

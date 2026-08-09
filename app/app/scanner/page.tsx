@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, ArrowRight, ShieldCheck, Clock, CloudRain, IndianRupee } from "lucide-react";
+import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, Clock, CloudRain, IndianRupee } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
 import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";

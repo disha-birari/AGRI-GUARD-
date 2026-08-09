@@ -117,6 +117,12 @@ export const DEMO_USERS: Record<string, User> = {
     id: "a1", name: "Admin User", email: "admin@agriguard.in",
     role: "admin", avatar: "AU", language: "en",
   },
+  buyer: {
+    id: "b1", name: "Ananya Deshmukh", email: "buyer@society.in",
+    role: "farmer", avatar: "AD", language: "en",
+    phone: "+91 98200 88990", state: "Maharashtra",
+    district: "Nashik", village: "Greenwood Residency",
+  },
 };
 
 export const SCANS = [
