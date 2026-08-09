@@ -77,7 +77,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     router.push("/");
   };
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Logo */}
       <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(255,248,245,0.08)" }}>
@@ -163,7 +163,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <div style={{ display: "flex", height: "100vh", background: d.bg, overflow: "hidden", width: "100vw" }}>
       {/* Desktop sidebar */}
       <aside className="hidden md:block" style={{ width: 240, flexShrink: 0, background: isDark ? "#140a04" : "#2d1a0e", height: "100%", overflowY: "auto" }}>
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -174,7 +174,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <button onClick={() => setSidebarOpen(false)} style={{ position: "absolute", top: 16, right: 14, background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,248,245,0.6)", padding: 4 }}>
               <X size={18} />
             </button>
-            <SidebarContent />
+            {sidebarContent}
           </aside>
         </div>
       )}

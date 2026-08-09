@@ -1,3 +1,5 @@
+import type { User } from "./context";
+
 export interface TreatmentDetail {
   organic: string[];
   chemical: string[];

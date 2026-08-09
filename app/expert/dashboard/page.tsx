@@ -7,6 +7,14 @@ import { useTheme } from "@/lib/context";
 import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
+function Card({ children, style = {}, d, isDark }: { children: ReactNode; style?: CSSProperties; d: any; isDark: boolean }) {
+  return (
+    <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 14, padding: 20, boxShadow: shadow(isDark, 1), ...style }}>
+      {children}
+    </div>
+  );
+}
+
 export default function ExpertDashboard() {
   const { d, isDark } = useTheme();
   const [queue, setQueue] = useState<any[]>([]);
@@ -54,12 +62,6 @@ export default function ExpertDashboard() {
     setResponse("");
   };
 
-  const Card = ({ children, style = {} }: { children: ReactNode; style?: CSSProperties }) => (
-    <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 14, padding: 20, boxShadow: shadow(isDark, 1), ...style }}>
-      {children}
-    </div>
-  );
-
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
@@ -75,7 +77,7 @@ export default function ExpertDashboard() {
           { label: "Total Queries",  val: queue.length,    icon: MessageSquare,col: "#436464" },
           { label: "Avg. Conf.",     val: "89%",           icon: AlertTriangle,col: "#8b5e3c" },
         ].map((s, i) => (
-          <Card key={i} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Card key={i} d={d} isDark={isDark} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: `${s.col}14`, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <s.icon size={17} color={s.col} />
             </div>
@@ -88,7 +90,7 @@ export default function ExpertDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
 
         {/* Pending queue */}
-        <Card>
+        <Card d={d} isDark={isDark}>
           <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 16px" }}>Pending Reviews ({pending.length})</p>
           {pending.length === 0 && (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
@@ -125,7 +127,7 @@ export default function ExpertDashboard() {
 
         {/* Review panel or answered list */}
         {activeReview ? (
-          <Card>
+          <Card d={d} isDark={isDark}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 15, color: d.text, margin: 0 }}>Review: {activeReview.farmer_name || activeReview.farmer}</p>
               <button onClick={() => setActiveReview(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: d.textMuted, fontFamily: MRP, fontSize: 12 }}>Cancel</button>
@@ -159,7 +161,7 @@ export default function ExpertDashboard() {
             </button>
           </Card>
         ) : (
-          <Card>
+          <Card d={d} isDark={isDark}>
             <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 14px" }}>Recent Answers ({answered.length})</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {answered.map(q => (

@@ -41,7 +41,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 export function Providers({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!supabase);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -51,7 +51,6 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     const client = supabase;
     if (!client) {
-      setLoading(false);
       return;
     }
 
