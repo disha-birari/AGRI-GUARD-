@@ -10,6 +10,8 @@ interface Msg {
   role: "user" | "bot"; 
   text: string; 
   time: string; 
+  source?: string;
+  tokensSaved?: boolean;
 }
 
 const INDIAN_LANGUAGES = [
@@ -133,14 +135,19 @@ export default function AgriVoicePage() {
       });
 
       let replyText = "";
+      let source = "local_icar_rag";
+      let tokensSaved = true;
+
       if (res.ok) {
         const json = await res.json();
         replyText = json.response;
+        source = json.source || "local_icar_rag";
+        tokensSaved = json.tokensSaved !== false;
       } else {
         throw new Error("Voice API response error");
       }
 
-      const botMsg: Msg = { role: "bot", text: replyText, time: now() };
+      const botMsg: Msg = { role: "bot", text: replyText, time: now(), source, tokensSaved };
       setMsgs(prev => {
         const updated = [...prev, botMsg];
         const newIdx = updated.length - 1;
@@ -307,10 +314,25 @@ export default function AgriVoicePage() {
                   {m.text}
                 </p>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontFamily: MRP, fontSize: 10, color: isUser ? "rgba(255,255,255,0.7)" : d.textMuted }}>
-                    {m.time}
-                  </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontFamily: MRP, fontSize: 10, color: isUser ? "rgba(255,255,255,0.7)" : d.textMuted }}>
+                      {m.time}
+                    </span>
+                    {!isUser && (
+                      <span style={{ 
+                        fontFamily: MRP, 
+                        fontWeight: 700, 
+                        fontSize: 9, 
+                        color: m.source?.includes("local") ? "#456348" : "#436464", 
+                        background: m.source?.includes("local") ? "rgba(69,99,72,0.12)" : "rgba(67,100,100,0.12)",
+                        padding: "1px 6px",
+                        borderRadius: 4
+                      }}>
+                        {m.source?.includes("local") ? "⚡ ICAR RAG (Saved API Limit)" : "🌐 Augmented AI"}
+                      </span>
+                    )}
+                  </div>
 
                   {!isUser && (
                     <button 

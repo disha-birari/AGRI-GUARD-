@@ -268,6 +268,83 @@ runTest("Disease knowledge provides both Organic and Chemical treatment options"
 });
 
 // ─────────────────────────────────────────────────────────────
+// 11. LOCAL ICAR RAG SEMANTIC RETRIEVAL TEST
+// ─────────────────────────────────────────────────────────────
+console.log("\n▶ MODULE 11: Local ICAR Agronomic RAG Vector Retriever");
+
+import { ragEngine } from "../lib/rag-engine.ts";
+
+runTest("RAG engine retrieves Tomato Late Blight with >75% confidence for Marathi query", () => {
+  const result = ragEngine.query("टोमॅटो करपा फवारणी", "Marathi");
+  assert.ok(result.confidence >= 0.70, `Expected confidence >= 0.70, got ${result.confidence}`);
+  assert.equal(result.isLocalRag, true);
+  assert.ok(result.response.includes("मॅन्कोझेब") || result.response.includes("रिडोमिल"));
+});
+
+runTest("RAG engine retrieves Onion Thrips advice in Hindi", () => {
+  const result = ragEngine.query("प्याज में थ्रिप्स और माहू की दवा", "Hindi");
+  assert.ok(result.confidence >= 0.65);
+  assert.ok(result.response.includes("फिप्रोनिल") || result.response.includes("नीम"));
+});
+
+// ─────────────────────────────────────────────────────────────
+// 12. MULTILINGUAL NLP INTENT CLASSIFIER TEST
+// ─────────────────────────────────────────────────────────────
+console.log("\n▶ MODULE 12: Multilingual NLP Intent Classifier & Entity Extraction");
+
+import { nlpEngine } from "../lib/nlp-engine.ts";
+
+runTest("NLP engine classifies Marathi spray query to DIAGNOSIS_AND_TREATMENT", () => {
+  const nlp = nlpEngine.classifyIntent("कांद्यावर करपा आला आहे कोणती फवारणी करावी");
+  assert.equal(nlp.intent, "DIAGNOSIS_AND_TREATMENT");
+  assert.equal(nlp.detectedLanguage, "Marathi");
+  assert.ok(nlp.entities.crops.includes("Onion"));
+});
+
+runTest("NLP engine routes mandi price query to MARKET_PRICE_AND_MANDI", () => {
+  const nlp = nlpEngine.classifyIntent("आज टोमॅटोचा बाजार भाव काय चालू आहे");
+  assert.equal(nlp.intent, "MARKET_PRICE_AND_MANDI");
+  assert.equal(nlp.suggestedRoute, "/app/markets");
+});
+
+// ─────────────────────────────────────────────────────────────
+// 13. COMPUTER VISION ML FEATURE EXTRACTOR TEST
+// ─────────────────────────────────────────────────────────────
+console.log("\n▶ MODULE 13: Local Computer Vision & Foliar ML Feature Extractor");
+
+import { foliarMLClassifier } from "../lib/ml-classifier.ts";
+
+runTest("Foliar ML extracts chlorophyll index and necrosis ratios locally", () => {
+  const mockBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP...";
+  const features = foliarMLClassifier.analyzeFeatures(mockBase64, "Tomato");
+  assert.ok(features.chlorophyllIndex >= 0 && features.chlorophyllIndex <= 100);
+  assert.ok(features.necrosisSpotRatio >= 0 && features.necrosisSpotRatio <= 100);
+  assert.ok(["High", "Medium", "Low", "Healthy"].includes(features.estimatedSeverity));
+});
+
+// ─────────────────────────────────────────────────────────────
+// 14. AGRI OCR PESTICIDE & SOIL HEALTH CARD PARSER TEST
+// ─────────────────────────────────────────────────────────────
+console.log("\n▶ MODULE 14: OCR Pesticide Label & Soil Health Card Parser");
+
+import { agriOCREngine } from "../lib/ocr-engine.ts";
+
+runTest("OCR engine parses Mancozeb chemical container label & dosage", () => {
+  const mockOCRText = "DITHANE M-45 Mancozeb 75% WP Contact Fungicide Net Wt 500g";
+  const parsed = agriOCREngine.parsePesticideLabel(mockOCRText);
+  assert.equal(parsed.activeIngredient, "Mancozeb");
+  assert.ok(parsed.recommendedDosagePerLiter.includes("2.0"));
+  assert.equal(parsed.preHarvestIntervalDays, 7);
+});
+
+runTest("OCR engine parses Soil Health Card NPK metrics and generates corrections", () => {
+  const mockSoilText = "Government of Maharashtra Soil Health Card Sample MH-88992";
+  const parsed = agriOCREngine.parseSoilHealthCard(mockSoilText);
+  assert.ok(parsed.ph > 6.0 && parsed.ph < 8.5);
+  assert.ok(parsed.recommendations.length >= 2);
+});
+
+// ─────────────────────────────────────────────────────────────
 // SUMMARY
 // ─────────────────────────────────────────────────────────────
 console.log("\n=======================================================");
@@ -277,3 +354,4 @@ console.log("=======================================================\n");
 if (failed > 0) {
   process.exit(1);
 }
+

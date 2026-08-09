@@ -230,6 +230,20 @@ export default function MainDashboard() {
               path: "/app/insurance",
               col: "#8b5e3c"
             },
+            {
+              title: "OCR Label & Soil Card",
+              tag: "OCD / OCR",
+              desc: "Instant chemical dosage & soil health card parser.",
+              path: "/app/voice",
+              col: "#7c3aed"
+            },
+            {
+              title: "ICAR RAG Neural Engine",
+              tag: "Local RAG",
+              desc: "Instant verified agronomy answers (Zero API Cost).",
+              path: "/app/voice",
+              col: "#0284c7"
+            }
           ].map((tool, idx) => (
             <div
               key={idx}

@@ -1,0 +1,39 @@
+name: AGRI-GUARD CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-and-build:
+    name: Lint, Test & Production Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci || npm install
+
+      - name: Step 1 - Static Code Analysis & Linting
+        run: npm run lint
+
+      - name: Step 2 - TypeScript Static Type Validation
+        run: npx tsc --noEmit
+
+      - name: Step 3 - Automated QA & RAG/NLP/ML Test Suite
+        run: npm test
+
+      - name: Step 4 - Next.js Production Build Validation
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
