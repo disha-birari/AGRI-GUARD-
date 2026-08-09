@@ -1,24 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { CheckCircle, Clock, AlertTriangle, MessageSquare, User, Eye } from "lucide-react";
 import { useTheme } from "@/lib/context";
-import { EXPERT_QUEUE } from "@/lib/data";
+import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
 export default function ExpertDashboard() {
   const { d, isDark } = useTheme();
-  const [queue, setQueue] = useState(EXPERT_QUEUE);
-  const [activeReview, setActiveReview] = useState<typeof EXPERT_QUEUE[0] | null>(null);
+  const [queue, setQueue] = useState<any[]>([]);
+  const [activeReview, setActiveReview] = useState<any | null>(null);
   const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function loadData() {
+      try {
+        const data = await db.getExpertQueue();
+        if (active) setQueue(data);
+      } catch (err) {
+        console.error("Failed to load expert review queue", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { active = false; };
+  }, []);
 
   const pending = queue.filter(q => q.status === "pending");
   const answered = queue.filter(q => q.status === "answered");
 
-  const submitReview = () => {
+  const submitReview = async () => {
     if (!activeReview || !response) return;
     setQueue(q => q.map(item => item.id === activeReview.id ? { ...item, status: "answered" } : item));
+
+    try {
+      await db.createExpertQuery({
+        farmer_name: activeReview.farmer_name || activeReview.farmer || "Farmer",
+        crop: activeReview.crop,
+        disease: activeReview.disease,
+        conf: activeReview.conf,
+        query: activeReview.query,
+        status: "answered"
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
     setActiveReview(null);
     setResponse("");
   };
@@ -74,7 +105,7 @@ export default function ExpertDashboard() {
                       <User size={13} color="#c4501a" />
                     </div>
                     <div>
-                      <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: 0 }}>{q.farmer}</p>
+                      <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: 0 }}>{q.farmer_name || q.farmer}</p>
                       <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>{q.crop} · {q.date}</p>
                     </div>
                   </div>
@@ -96,7 +127,7 @@ export default function ExpertDashboard() {
         {activeReview ? (
           <Card>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 15, color: d.text, margin: 0 }}>Review: {activeReview.farmer}</p>
+              <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 15, color: d.text, margin: 0 }}>Review: {activeReview.farmer_name || activeReview.farmer}</p>
               <button onClick={() => setActiveReview(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: d.textMuted, fontFamily: MRP, fontSize: 12 }}>Cancel</button>
             </div>
 
@@ -135,7 +166,7 @@ export default function ExpertDashboard() {
                 <div key={q.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 14px", borderRadius: 10, background: "rgba(69,99,72,0.05)", border: "1px solid rgba(69,99,72,0.15)" }}>
                   <CheckCircle size={16} color="#456348" style={{ flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 1px" }}>{q.farmer}</p>
+                    <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 1px" }}>{q.farmer_name || q.farmer}</p>
                     <p style={{ fontFamily: MRP, fontSize: 12, color: d.textMuted, margin: 0 }}>{q.crop} · {q.disease} · {q.date}</p>
                   </div>
                   <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 10, color: "#456348", background: "rgba(69,99,72,0.1)", padding: "2px 9px", borderRadius: 999 }}>Answered</span>

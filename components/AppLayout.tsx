@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Camera, Mic, CloudRain, IndianRupee,
   History, Bell, User, LogOut, Menu, X, Sun, Moon,
   Leaf, ChevronDown, ShieldCheck, Settings, Users,
+  ShoppingBag, TrendingDown, Tractor, Droplets, ShieldAlert, Sparkles
 } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
@@ -14,18 +15,24 @@ interface NavItem {
   label: string;
   path: string;
   icon: ElementType;
-  badge?: number;
+  badge?: string | number;
+  badgeCol?: string;
 }
 
 const FARMER_NAV: NavItem[] = [
-  { label: "Dashboard",     path: "/app/dashboard",     icon: LayoutDashboard },
-  { label: "AI Eye",        path: "/app/scanner",       icon: Camera },
-  { label: "Agri-Voice",    path: "/app/voice",         icon: Mic },
-  { label: "Weather",       path: "/app/weather",       icon: CloudRain },
-  { label: "Mandi-Pro",     path: "/app/markets",       icon: IndianRupee },
-  { label: "My History",    path: "/app/history",       icon: History },
-  { label: "Notifications", path: "/app/notifications", icon: Bell, badge: 3 },
-  { label: "Profile",       path: "/app/profile",       icon: User },
+  { label: "Main Hub",           path: "/app/dashboard",     icon: LayoutDashboard },
+  { label: "Kisan-to-Kitchen",   path: "/app/direct",        icon: ShoppingBag, badge: "Direct", badgeCol: "#456348" },
+  { label: "Glut Early Warning", path: "/app/glut-forecast", icon: TrendingDown, badge: "AI", badgeCol: "#ba1a1a" },
+  { label: "Krishi-Share Rent",  path: "/app/machinery",     icon: Tractor },
+  { label: "Smart Drip Ledger",  path: "/app/irrigation",    icon: Droplets },
+  { label: "Crop Loss Claim",    path: "/app/insurance",     icon: ShieldAlert },
+  { label: "Digital Doctor",     path: "/app/scanner",       icon: Camera },
+  { label: "Agri-Voice",         path: "/app/voice",         icon: Mic },
+  { label: "Weather Spray",      path: "/app/weather",       icon: CloudRain },
+  { label: "Mandi-Pro",          path: "/app/markets",       icon: IndianRupee },
+  { label: "Season Report",      path: "/app/history",       icon: History },
+  { label: "Community Radar",    path: "/app/notifications", icon: Bell, badge: 3 },
+  { label: "My Profile",         path: "/app/profile",       icon: User },
 ];
 
 const EXPERT_NAV: NavItem[] = [
@@ -110,7 +117,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <item.icon size={17} />
               <span style={{ fontFamily: MRP, fontWeight: 600, fontSize: 14, flex: 1 }}>{item.label}</span>
               {item.badge && !active && (
-                <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#c4501a", color: "#fff", fontFamily: PJS, fontWeight: 800, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.badge}</span>
+                <span style={{ 
+                  padding: typeof item.badge === "string" ? "1px 7px" : "0",
+                  height: 18, 
+                  minWidth: 18,
+                  borderRadius: 999, 
+                  background: item.badgeCol || "#c4501a", 
+                  color: "#fff", 
+                  fontFamily: PJS, 
+                  fontWeight: 800, 
+                  fontSize: 10, 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center" 
+                }}>
+                  {item.badge}
+                </span>
               )}
             </button>
           );

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode, CSSProperties } from "react";
 import { Users, Activity, Camera, Globe, TrendingUp, ShieldCheck, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useTheme } from "@/lib/context";
 import { ADMIN_STATS } from "@/lib/data";
+import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
 type RoleFilter = "all" | "farmer" | "expert" | "admin";
@@ -14,8 +15,26 @@ export default function AdminDashboard() {
   const { d, isDark } = useTheme();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [search, setSearch] = useState("");
+  const [stats, setStats] = useState(ADMIN_STATS);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = ADMIN_STATS.recentUsers.filter(u => {
+  useEffect(() => {
+    let active = true;
+    async function loadData() {
+      try {
+        const fetchedStats = await db.getAdminStats();
+        if (fetchedStats && active) setStats(fetchedStats);
+      } catch (err) {
+        console.error("Failed to load admin stats", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { active = false; };
+  }, []);
+
+  const filtered = stats.recentUsers.filter(u => {
     const matchRole = roleFilter === "all" || u.role === roleFilter;
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     return matchRole && matchSearch;
@@ -37,10 +56,10 @@ export default function AdminDashboard() {
       {/* Key metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 24 }}>
         {[
-          { label: "Total Users",    val: ADMIN_STATS.totalUsers.toLocaleString("en-IN"),  icon: Users,      col: "#c4501a" },
-          { label: "Active Today",   val: ADMIN_STATS.activeToday.toLocaleString("en-IN"), icon: Activity,   col: "#436464" },
-          { label: "Scans Today",    val: ADMIN_STATS.scansToday.toLocaleString("en-IN"),  icon: Camera,     col: "#456348" },
-          { label: "Expert Reviewers", val: ADMIN_STATS.experts.toLocaleString("en-IN"),  icon: ShieldCheck, col: "#8b5e3c" },
+          { label: "Total Users",    val: stats.totalUsers.toLocaleString("en-IN"),  icon: Users,      col: "#c4501a" },
+          { label: "Active Today",   val: stats.activeToday.toLocaleString("en-IN"), icon: Activity,   col: "#436464" },
+          { label: "Scans Today",    val: stats.scansToday.toLocaleString("en-IN"),  icon: Camera,     col: "#456348" },
+          { label: "Expert Reviewers", val: stats.experts.toLocaleString("en-IN"),  icon: ShieldCheck, col: "#8b5e3c" },
           { label: "States Covered", val: "18",                                            icon: Globe,      col: "#436464" },
           { label: "Accuracy Rate",  val: "96%",                                           icon: TrendingUp, col: "#456348" },
         ].map((s, i) => (
@@ -61,7 +80,7 @@ export default function AdminDashboard() {
           <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 16px" }}>Weekly Scans</p>
           <div style={{ width: "100%", height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ADMIN_STATS.weeklyScans} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <BarChart data={stats.weeklyScans} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,248,245,0.05)" : "rgba(35,26,19,0.05)"} vertical={false} />
                 <XAxis dataKey="day" tick={{ fontFamily: MRP, fontSize: 11, fill: d.textMuted }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontFamily: MRP, fontSize: 11, fill: d.textMuted }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
@@ -76,9 +95,9 @@ export default function AdminDashboard() {
         <Card>
           <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 14px" }}>User Breakdown</p>
           {[
-            { role: "Farmers", count: ADMIN_STATS.farmers, total: ADMIN_STATS.totalUsers, col: "#c4501a" },
-            { role: "Experts", count: ADMIN_STATS.experts, total: ADMIN_STATS.totalUsers, col: "#436464" },
-            { role: "Admins",  count: ADMIN_STATS.admins,  total: ADMIN_STATS.totalUsers, col: "#456348" },
+            { role: "Farmers", count: stats.farmers, total: stats.totalUsers, col: "#c4501a" },
+            { role: "Experts", count: stats.experts, total: stats.totalUsers, col: "#436464" },
+            { role: "Admins",  count: stats.admins,  total: stats.totalUsers, col: "#456348" },
           ].map(({ role, count, total, col }) => {
             const pct = Math.round((count / total) * 100);
             return (

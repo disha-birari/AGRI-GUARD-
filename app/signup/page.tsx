@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Leaf, ArrowRight, Check } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
+import { supabase } from "@/lib/supabase";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
 const CROPS = ["Tomato","Onion","Wheat","Rice","Chilli","Cotton","Sugarcane","Potato","Maize","Soybean","Groundnut","Mango"];
@@ -33,12 +34,69 @@ export default function Signup() {
     </div>
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true);
-    setTimeout(() => {
-      login({ id:"new1", name:form.name||"New User", email:form.email, role, avatar: (form.name||"NU").slice(0,2).toUpperCase(), language:"en", phone:form.phone, state:form.state, district:form.district, village:form.village, farmSize:form.farmSize, crops:form.crops });
-      router.push(role === "expert" ? "/expert/dashboard" : "/app/dashboard");
-    }, 800);
+
+    if (supabase) {
+      try {
+        const { data: authData, error: authErr } = await supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            data: {
+              name: form.name,
+              role: role,
+              avatar: form.name.slice(0, 2).toUpperCase(),
+              language: "en"
+            }
+          }
+        });
+
+        if (authErr) throw authErr;
+
+        if (authData?.user) {
+          const { error: profileErr } = await supabase
+            .from("profiles")
+            .update({
+              phone: form.phone || null,
+              state: form.state,
+              district: form.district || null,
+              village: form.village || null,
+              farm_size: form.farmSize || null,
+              crops: form.crops,
+            })
+            .eq("id", authData.user.id);
+          
+          if (profileErr) throw profileErr;
+
+          login({
+            id: authData.user.id,
+            name: form.name,
+            email: form.email,
+            role,
+            avatar: form.name.slice(0, 2).toUpperCase(),
+            language: "en",
+            phone: form.phone,
+            state: form.state,
+            district: form.district,
+            village: form.village,
+            farmSize: form.farmSize,
+            crops: form.crops,
+          });
+
+          router.push(role === "expert" ? "/expert/dashboard" : "/app/dashboard");
+        }
+      } catch (err: any) {
+        alert(err.message || "Failed to create account. Verify details.");
+        setLoading(false);
+      }
+    } else {
+      // Local fallback
+      setTimeout(() => {
+        login({ id:"new1", name:form.name||"New User", email:form.email, role, avatar: (form.name||"NU").slice(0,2).toUpperCase(), language:"en", phone:form.phone, state:form.state, district:form.district, village:form.village, farmSize:form.farmSize, crops:form.crops });
+        router.push(role === "expert" ? "/expert/dashboard" : "/app/dashboard");
+      }, 800);
+    }
   };
 
   return (

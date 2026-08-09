@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode, CSSProperties, ElementType } from "react";
-import { Camera, Mic, CloudRain, IndianRupee, AlertTriangle, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { Camera, Mic, CloudRain, IndianRupee, AlertTriangle, TrendingUp, CheckCircle, Clock, Award, Radar, ArrowRight, ShieldCheck, Ban, Sparkles } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useAuth, useTheme } from "@/lib/context";
-import { SCANS, WEATHER, MARKETS, NOTIFICATIONS, HEALTH_CHART } from "@/lib/data";
+import { WEATHER, MARKETS, HEALTH_CHART, COMMUNITY_ALERTS, SEASON_REPORT } from "@/lib/data";
+import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
 function Card({ children, style = {} }: { children: ReactNode; style?: CSSProperties }) {
@@ -35,72 +37,197 @@ function StatusBadge({ status }: { status: string }) {
   return <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: col, background: bg, padding: "3px 10px", borderRadius: 999 }}>{status}</span>;
 }
 
-export default function FarmerDashboard() {
+export default function MainDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { d, isDark } = useTheme();
 
-  const lastScan = SCANS[0];
-  const unread = NOTIFICATIONS.filter(n => !n.read).length;
-  const weatherRisk = "Medium";
+  const [scans, setScans] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function loadData() {
+      try {
+        const fetchedScans = await db.getScans(user?.id);
+        const fetchedNotifs = await db.getNotifications(user?.id);
+        if (active) {
+          setScans(fetchedScans);
+          setNotifications(fetchedNotifs);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard data from Supabase", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { active = false; };
+  }, [user?.id]);
+
+  const lastScan = scans[0] || { crop: "Tomato", disease: "Late Blight", confidence: 96, date: "Recent", status: "treated", img: "photo-1416879595882-3373a0480b5b", severity: "High" };
   const bestMarket = MARKETS[0];
+  const nearestCommunityAlert = COMMUNITY_ALERTS[0];
 
-  const quickActions = [
-    { label: "Scan Crop",     icon: Camera,      path: "/app/scanner", color: "#c4501a",  desc: "Detect diseases instantly" },
-    { label: "Ask AI Voice",  icon: Mic,         path: "/app/voice",   color: "#436464",  desc: "Speak your problem" },
-    { label: "Weather",       icon: CloudRain,   path: "/app/weather", color: "#456348",  desc: "Smart spray timing" },
-    { label: "Markets",       icon: IndianRupee, path: "/app/markets", color: "#8b5e3c",  desc: "Best mandi prices" },
-  ];
-
-  const journeySteps = [
-    { label: "SEE",     icon: Camera,      done: true,  path: "/app/scanner", note: "Last scan: Late Blight" },
-    { label: "PREDICT", icon: CloudRain,   done: true,  path: "/app/weather", note: "Spray after 4 PM today" },
-    { label: "EARN",    icon: IndianRupee, done: false, path: "/app/markets", note: "Check Vashi prices →" },
+  // The 3 Core Flowchart Branches
+  const flowchartBranches = [
+    {
+      branchTag: "Branch 1: See Sick Plant",
+      title: "Digital Doctor",
+      desc: "Instant camera leaf diagnosis + Organic & Chemical treatment plans.",
+      icon: Camera,
+      color: "#c4501a",
+      path: "/app/scanner",
+      buttonText: "Scan Leaf Now →"
+    },
+    {
+      branchTag: "Branch 2: Need Advice",
+      title: "Smart Advisor",
+      desc: "GPS weather check (Rain in 6h?) + Multilingual Agri-Voice assistant.",
+      icon: CloudRain,
+      color: "#436464",
+      path: "/app/weather",
+      buttonText: "Check Spray Window →"
+    },
+    {
+      branchTag: "Branch 3: Ready to Sell",
+      title: "Mandi Pro",
+      desc: "Real-time AGMARKNET prices, price heatmap & GPS route navigation.",
+      icon: IndianRupee,
+      color: "#456348",
+      path: "/app/markets",
+      buttonText: "Find Best Market →"
+    },
   ];
 
   return (
     <div>
-      {/* Welcome */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 26, color: d.text, margin: "0 0 4px" }}>
-          Namaste, {user?.name?.split(" ")[0]}! 🌾
-        </h1>
-        <p style={{ fontFamily: MRP, fontSize: 14, color: d.textMuted, margin: 0 }}>
-          {user?.village && `${user.village}, `}{user?.district} · {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
-        </p>
+      {/* Welcome & Farmer Context Header */}
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, background: "rgba(196,80,26,0.08)", border: "1px solid rgba(196,80,26,0.2)", marginBottom: 6 }}>
+            <Sparkles size={12} color="#c4501a" />
+            <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: "#c4501a", textTransform: "uppercase" }}>AGRI-GUARD · Central Farming Hub</span>
+          </div>
+          <h1 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 26, color: d.text, margin: "0 0 4px" }}>
+            Namaste, {user?.name?.split(" ")[0] || "Kisan Mitr"}! 🌾
+          </h1>
+          <p style={{ fontFamily: MRP, fontSize: 14, color: d.textMuted, margin: 0 }}>
+            {user?.village && `${user.village}, `}{user?.district || "Nashik"} · {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+        </div>
+
+        {/* Quick Report Access */}
+        <button 
+          onClick={() => router.push("/app/history")}
+          style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(69,99,72,0.1)", border: "1px solid rgba(69,99,72,0.3)", color: "#456348", fontFamily: PJS, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+        >
+          <Award size={15} />View Season Report →
+        </button>
       </div>
 
-      {/* Quick Actions */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: 12, marginBottom: 24 }}>
-        {quickActions.map((a) => (
-          <button key={a.label} onClick={() => router.push(a.path)}
-            style={{ padding: "18px 16px", borderRadius: 14, border: `1px solid ${d.border}`, background: d.card, cursor: "pointer", textAlign: "left", boxShadow: shadow(isDark, 1), transition: "transform 0.15s, box-shadow 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = shadow(isDark, 2); }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = shadow(isDark, 1); }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: `${a.color}14`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-              <a.icon size={20} color={a.color} />
+      {/* ── FLOWCHART 3 PRIMARY PATHWAYS ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 22 }}>
+        {flowchartBranches.map((b) => (
+          <div 
+            key={b.title} 
+            style={{ 
+              padding: "18px 20px", 
+              borderRadius: 16, 
+              border: `1.5px solid ${b.color}35`, 
+              background: isDark ? `${b.color}0d` : `${b.color}06`, 
+              boxShadow: shadow(isDark, 1),
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between"
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontFamily: MRP, fontWeight: 800, fontSize: 10, color: b.color, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {b.branchTag}
+                </span>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${b.color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <b.icon size={18} color={b.color} />
+                </div>
+              </div>
+              <h2 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 18, color: d.text, margin: "0 0 6px" }}>
+                {b.title}
+              </h2>
+              <p style={{ fontFamily: MRP, fontSize: 13, color: d.textSub, margin: "0 0 16px", lineHeight: 1.45 }}>
+                {b.desc}
+              </p>
             </div>
-            <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 14, color: d.text, margin: "0 0 2px" }}>{a.label}</p>
-            <p style={{ fontFamily: MRP, fontSize: 12, color: d.textMuted, margin: 0 }}>{a.desc}</p>
-          </button>
+
+            <button 
+              onClick={() => router.push(b.path)}
+              style={{ 
+                width: "100%", 
+                padding: "9px 14px", 
+                borderRadius: 8, 
+                background: b.color, 
+                color: "#fff", 
+                border: "none", 
+                fontFamily: PJS, 
+                fontWeight: 700, 
+                fontSize: 13, 
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6
+              }}
+            >
+              {b.buttonText}
+            </button>
+          </div>
         ))}
       </div>
 
-      {/* Main grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px,1fr))", gap: 16, marginBottom: 16 }}>
+      {/* ── LIVE RADAR & TELEMETRY ROW ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginBottom: 20 }}>
+        
+        {/* Community Disease Outbreak Radar Banner */}
+        <Card style={{ borderLeft: "4px solid #ba1a1a" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Radar size={16} color="#ba1a1a" />
+              <SectionLabel>Community Outbreak Alert (Near You)</SectionLabel>
+            </div>
+            <span style={{ fontFamily: MRP, fontWeight: 800, fontSize: 10, color: "#ba1a1a", background: "rgba(186,26,26,0.12)", padding: "2px 8px", borderRadius: 999 }}>
+              {nearestCommunityAlert.distanceKm} km away
+            </span>
+          </div>
 
-        {/* Last scan */}
+          <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 16, color: d.text, margin: "0 0 4px" }}>
+            {nearestCommunityAlert.crop}: {nearestCommunityAlert.disease} outbreak
+          </p>
+          <p style={{ fontFamily: MRP, fontSize: 12, color: d.textMuted, margin: "0 0 12px" }}>
+            Location: {nearestCommunityAlert.location} · {nearestCommunityAlert.date}
+          </p>
+
+          <p style={{ fontFamily: MRP, fontSize: 13, color: d.textSub, margin: "0 0 14px", lineHeight: 1.45 }}>
+            💡 <strong>Preventive Action:</strong> {nearestCommunityAlert.advice}
+          </p>
+
+          <button onClick={() => router.push("/app/notifications")} style={{ width: "100%", padding: "8px", borderRadius: 8, background: "rgba(186,26,26,0.08)", border: "1px solid rgba(186,26,26,0.2)", color: "#ba1a1a", fontFamily: PJS, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            View All Nearby Outbreak Alerts →
+          </button>
+        </Card>
+
+        {/* Digital Doctor Recent Scan Status */}
         <Card>
-          <SectionLabel>Recent Scan</SectionLabel>
-          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <img src={`https://images.unsplash.com/photo-${lastScan.img}?w=80&h=80&fit=crop&auto=format`} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+          <SectionLabel>Digital Doctor · Recent Leaf Diagnosis</SectionLabel>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 12 }}>
+            <img src={`https://images.unsplash.com/${lastScan.img}?w=80&h=80&fit=crop&auto=format`} alt="" style={{ width: 60, height: 60, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
                 <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 15, color: d.text, margin: 0 }}>{lastScan.disease}</p>
                 <StatusBadge status={lastScan.status} />
               </div>
-              <p style={{ fontFamily: MRP, fontSize: 13, color: d.textSub, margin: "0 0 6px" }}>{lastScan.crop} · {lastScan.date}</p>
-              {/* Confidence bar */}
+              <p style={{ fontFamily: MRP, fontSize: 12, color: d.textSub, margin: "0 0 6px" }}>Host: <strong>{lastScan.crop}</strong> · {lastScan.date}</p>
+              
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ flex: 1, height: 5, borderRadius: 999, background: d.bgMuted, overflow: "hidden" }}>
                   <div style={{ width: `${lastScan.confidence}%`, height: "100%", borderRadius: 999, background: lastScan.confidence >= 90 ? "#456348" : "#c4501a" }} />
@@ -109,64 +236,36 @@ export default function FarmerDashboard() {
               </div>
             </div>
           </div>
-          <button onClick={() => router.push("/app/scanner")} style={{ marginTop: 14, width: "100%", padding: "9px", borderRadius: 8, background: "rgba(196,80,26,0.08)", border: "1px solid rgba(196,80,26,0.2)", color: "#c4501a", fontFamily: PJS, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-            Scan Again →
+          <button onClick={() => router.push("/app/scanner")} style={{ width: "100%", padding: "8px", borderRadius: 8, background: "rgba(196,80,26,0.08)", border: "1px solid rgba(196,80,26,0.2)", color: "#c4501a", fontFamily: PJS, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            Open Treatment Plan (Organic / Chemical) →
           </button>
         </Card>
 
-        {/* Weather alert */}
+        {/* Mandi-Pro Live Rate Best Match */}
         <Card>
-          <SectionLabel>Weather Intelligence</SectionLabel>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 12 }}>
+          <SectionLabel>Mandi Pro · Real-Time Price Leader</SectionLabel>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
             <div>
-              <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 28, color: d.text, margin: "0 0 2px" }}>28°C</p>
-              <p style={{ fontFamily: MRP, fontSize: 13, color: d.textSub, margin: 0 }}>Partly Cloudy · {user?.district}</p>
+              <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 16, color: d.text, margin: 0 }}>{bestMarket.name.split(",")[0]}</p>
+              <p style={{ fontFamily: MRP, fontSize: 12, color: d.textMuted, margin: 0 }}>{bestMarket.km} km away · {bestMarket.demand}</p>
             </div>
             <div style={{ textAlign: "right" }}>
-              <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: "0 0 4px" }}>Spray Risk</p>
-              <StatusBadge status={weatherRisk} />
+              <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 18, color: "#c4501a", margin: 0 }}>₹{bestMarket.price}/qtl</p>
+              <p style={{ fontFamily: MRP, fontSize: 11, color: "#456348", fontWeight: 700, margin: 0 }}>+{bestMarket.delta} vs avg</p>
             </div>
           </div>
-          {WEATHER.alerts.slice(0, 2).map((a, i) => (
-            <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: i === 0 ? `1px solid ${d.border}` : "none", marginTop: i === 0 ? 0 : 0 }}>
-              <AlertTriangle size={14} color={a.sev === "high" ? "#ba1a1a" : "#c4501a"} style={{ flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontFamily: MRP, fontSize: 12, color: d.textSub, margin: 0, lineHeight: 1.4 }}>{a.msg}</p>
-            </div>
-          ))}
-          <button onClick={() => router.push("/app/weather")} style={{ marginTop: 12, width: "100%", padding: "9px", borderRadius: 8, background: "rgba(67,100,100,0.08)", border: "1px solid rgba(67,100,100,0.2)", color: "#436464", fontFamily: PJS, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-            Full Forecast →
-          </button>
-        </Card>
-
-        {/* Mandi prices */}
-        <Card>
-          <SectionLabel>Nearby Mandi Prices</SectionLabel>
-          {MARKETS.slice(0, 3).map((m, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i < 2 ? `1px solid ${d.border}` : "none" }}>
-              <div>
-                <p style={{ fontFamily: MRP, fontWeight: 600, fontSize: 13, color: d.text, margin: "0 0 1px" }}>{m.name.split(",")[0]}</p>
-                <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>{m.km} km away</p>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 14, color: d.text, margin: "0 0 1px" }}>₹{m.price}/qtl</p>
-                <p style={{ fontFamily: MRP, fontSize: 11, color: m.delta > 0 ? "#456348" : "#ba1a1a", fontWeight: 700, margin: 0 }}>{m.delta > 0 ? "+" : ""}{m.delta}</p>
-              </div>
-            </div>
-          ))}
-          <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(196,80,26,0.06)", border: "1px solid rgba(196,80,26,0.15)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 12, color: "#c4501a", margin: 0 }}>Best: {bestMarket.name.split(",")[0]}</p>
-            <p style={{ fontFamily: MRP, fontSize: 11, color: "#c4501a", margin: 0, fontWeight: 700 }}>₹{bestMarket.price}/qtl ↑{bestMarket.delta}</p>
+          <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(69,99,72,0.06)", border: "1px solid rgba(69,99,72,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontFamily: MRP, fontSize: 12, color: "#456348" }}>Profit on 500kg harvest:</span>
+            <span style={{ fontFamily: PJS, fontWeight: 800, fontSize: 13, color: "#456348" }}>₹{((bestMarket.price * 5)).toLocaleString("en-IN")}</span>
           </div>
-          <button onClick={() => router.push("/app/markets")} style={{ marginTop: 10, width: "100%", padding: "9px", borderRadius: 8, background: "rgba(69,99,72,0.08)", border: "1px solid rgba(69,99,72,0.2)", color: "#456348", fontFamily: PJS, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-            Profit Calculator →
+          <button onClick={() => router.push("/app/markets")} style={{ width: "100%", padding: "8px", borderRadius: 8, background: "rgba(69,99,72,0.08)", border: "1px solid rgba(69,99,72,0.2)", color: "#456348", fontFamily: PJS, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            See Price Heatmap & Navigate →
           </button>
         </Card>
       </div>
 
-      {/* Health chart + Journey + Alerts */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))", gap: 16 }}>
-
-        {/* Crop health trend */}
+      {/* ── CROP HEALTH TREND & SEASON TRACKER ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <Card>
           <SectionLabel>Crop Health Trend — Last 7 Scans</SectionLabel>
           <div style={{ width: "100%", height: 160 }}>
@@ -181,66 +280,29 @@ export default function FarmerDashboard() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
-            {[["#456348","Healthy"],["#c4501a","Diseased"]].map(([col,label]) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 10, height: 3, borderRadius: 999, background: col }} />
-                <span style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted }}>{label}</span>
-              </div>
-            ))}
-          </div>
         </Card>
 
-        {/* Journey tracker */}
+        {/* Season Summary Widget */}
         <Card>
-          <SectionLabel>Your Journey Today</SectionLabel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {journeySteps.map((s, i) => (
-              <button key={s.label} onClick={() => router.push(s.path)}
-                style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: `1px solid ${s.done ? "rgba(69,99,72,0.3)" : d.border}`, background: s.done ? "rgba(69,99,72,0.06)" : "transparent", cursor: "pointer", textAlign: "left", width: "100%" }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: s.done ? "#456348" : d.bgMuted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {s.done ? <CheckCircle size={18} color="#fff" /> : <s.icon size={18} color={d.textMuted} />}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 1px" }}>{s.label}</p>
-                  <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>{s.note}</p>
-                </div>
-                <TrendingUp size={13} color={d.textMuted} />
-              </button>
-            ))}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <SectionLabel>Season Profit Boost</SectionLabel>
+            <span style={{ fontFamily: MRP, fontWeight: 700, fontSize: 11, color: "#456348" }}>{SEASON_REPORT.seasonName}</span>
           </div>
-          <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 8, background: "rgba(196,80,26,0.06)", border: "1px solid rgba(196,80,26,0.15)" }}>
-            <p style={{ fontFamily: MRP, fontSize: 12, color: "#c4501a", margin: 0 }}>
-              💡 Complete all 3 steps to maximize your earning this season.
-            </p>
-          </div>
-        </Card>
 
-        {/* Alerts feed */}
-        <Card>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <SectionLabel>Alerts Feed</SectionLabel>
-            <button onClick={() => router.push("/app/notifications")} style={{ fontFamily: MRP, fontWeight: 700, fontSize: 12, color: "#c4501a", background: "transparent", border: "none", cursor: "pointer" }}>View all</button>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <div style={{ padding: "10px", borderRadius: 8, background: d.bgAlt }}>
+              <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>Estimated Yield Saved</p>
+              <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 18, color: "#c4501a", margin: "2px 0 0" }}>{SEASON_REPORT.estimatedYieldSavedKg} kg</p>
+            </div>
+            <div style={{ padding: "10px", borderRadius: 8, background: d.bgAlt }}>
+              <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>Extra Profit Earned</p>
+              <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 18, color: "#456348", margin: "2px 0 0" }}>+₹{SEASON_REPORT.netFinancialGainINR.toLocaleString("en-IN")}</p>
+            </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {NOTIFICATIONS.filter(n => !n.read).map((n) => {
-              const icons: Record<string, ElementType> = { weather: CloudRain, price: TrendingUp, disease: AlertTriangle, system: CheckCircle };
-              const colors: Record<string, string> = { weather: "#436464", price: "#456348", disease: "#ba1a1a", system: "#8b7168" };
-              const Icon = icons[n.type] ?? AlertTriangle;
-              return (
-                <div key={n.id} style={{ display: "flex", gap: 10, padding: "10px 12px", borderRadius: 10, background: d.bgAlt, border: `1px solid ${d.border}` }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${colors[n.type]}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Icon size={14} color={colors[n.type]} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 12, color: d.text, margin: "0 0 1px" }}>{n.title}</p>
-                    <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.msg}</p>
-                  </div>
-                  <span style={{ fontFamily: MRP, fontSize: 10, color: d.textMuted, flexShrink: 0, paddingTop: 2 }}>{n.time}</span>
-                </div>
-              );
-            })}
-          </div>
+
+          <button onClick={() => router.push("/app/history")} style={{ width: "100%", padding: "9px", borderRadius: 8, background: "rgba(67,100,100,0.08)", border: "1px solid rgba(67,100,100,0.2)", color: "#436464", fontFamily: PJS, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            Open Full Season Report & Records →
+          </button>
         </Card>
       </div>
     </div>
