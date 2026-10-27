@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, Clock, CloudRain, IndianRupee } from "lucide-react";
+import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, ArrowRight, ShieldCheck, Clock, CloudRain, IndianRupee, Radar } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth, useTheme } from "@/lib/context";
 import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
@@ -86,8 +87,39 @@ export default function DigitalDoctorScanner() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [treatmentMode, setTreatmentMode] = useState<"organic" | "chemical">("organic");
   const [saved, setSaved] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [errorText, setErrorText] = useState("");
+
+  const handleReportOutbreak = async () => {
+    if (!result || result.disease === "Healthy") return;
+    setReporting(true);
+    try {
+      const res = await fetch("/api/community", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          crop: result.crop,
+          disease: result.disease,
+          severity: result.severity.toLowerCase(),
+          location: user?.village ? `${user.village}, ${user.district || "Nashik"}` : "Igatpuri, Nashik",
+          advice: result.organicTreatments?.[0] || result.treatments?.[0] || "Monitor moisture and clean tools."
+        })
+      });
+      if (res.ok) {
+        setReported(true);
+        toast.warning(`🚨 Outbreak Reported! Alert broadcasted to community radar.`);
+      } else {
+        toast.error("Failed to report outbreak.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to report outbreak.");
+    } finally {
+      setReporting(false);
+    }
+  };
 
   const handleFile = (file: File) => {
     const reader = new FileReader();
@@ -318,7 +350,7 @@ export default function DigitalDoctorScanner() {
                     </button>
                   )}
                   {!scanning && (
-                    <button onClick={() => { setImage(null); setResult(null); setSaved(false); setErrorText(""); }} style={{ padding: "8px 18px", borderRadius: 8, background: "rgba(255,255,255,0.25)", color: "#fff", fontFamily: MRP, fontWeight: 600, fontSize: 13, border: "1px solid rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                    <button onClick={() => { setImage(null); setResult(null); setSaved(false); setReported(false); setErrorText(""); }} style={{ padding: "8px 18px", borderRadius: 8, background: "rgba(255,255,255,0.25)", color: "#fff", fontFamily: MRP, fontWeight: 600, fontSize: 13, border: "1px solid rgba(255,255,255,0.4)", cursor: "pointer" }}>
                       <RefreshCw size={12} style={{ display:"inline", marginRight:5, verticalAlign:"middle" }}/>Change Leaf Photo
                     </button>
                   )}
@@ -554,6 +586,32 @@ export default function DigitalDoctorScanner() {
 
               {/* Bottom Flow Navigations (Save to History, Smart Advisor Weather check, Mandi Pro) */}
               <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {result.disease !== "Healthy" && (
+                  <button 
+                    onClick={handleReportOutbreak}
+                    disabled={reported || reporting}
+                    style={{ 
+                      width: "100%", 
+                      padding: "11px", 
+                      borderRadius: 10, 
+                      background: reported ? "rgba(186,26,26,0.12)" : "#ba1a1a", 
+                      color: reported ? "#ba1a1a" : "#fff", 
+                      fontFamily: PJS, 
+                      fontWeight: 800, 
+                      fontSize: 13, 
+                      border: `1.5px solid ${reported ? "rgba(186,26,26,0.3)" : "#ba1a1a"}`, 
+                      cursor: (reported || reporting) ? "not-allowed" : "pointer", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center", 
+                      gap: 6 
+                    }}
+                  >
+                    <Radar size={15} color={reported ? "#ba1a1a" : "#fff"} />
+                    {reporting ? "Broadcasting Outbreak..." : reported ? "🚨 Outbreak Reported to Community Radar" : "🚨 Report Outbreak to Community Radar"}
+                  </button>
+                )}
+
                 <div style={{ display: "flex", gap: 10 }}>
                   <button 
                     onClick={handleSaveToHistory} 
@@ -578,7 +636,7 @@ export default function DigitalDoctorScanner() {
                   </button>
 
                   <button 
-                    onClick={() => { setImage(null); setResult(null); setSaved(false); setErrorText(""); }} 
+                    onClick={() => { setImage(null); setResult(null); setSaved(false); setReported(false); setErrorText(""); }} 
                     style={{ 
                       padding: "11px 16px", 
                       borderRadius: 10, 

@@ -15,7 +15,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return Number((R * c).toFixed(1));
 }
 
-const REGIONAL_OUTBREAK_CLUSTERS = [
+let REGIONAL_OUTBREAK_CLUSTERS = [
   { id: "c1", crop: "Tomato", disease: "Late Blight", lat: 20.0800, lon: 73.9200, location: "Ozar / Niphad Belt", severity: "high", cases: 18, advice: "High humidity will accelerate fungal spore spread. Spray preventive Trichoderma viride (5g/L) or Mancozeb today." },
   { id: "c2", crop: "Onion", disease: "Purple Blotch", lat: 20.1200, lon: 73.8100, location: "Dindori Agricultural Zone", severity: "medium", cases: 11, advice: "Morning dew index is high. Apply sulfur dust @ 3g/L or neem emulsion." },
   { id: "c3", crop: "Chilli", disease: "Leaf Curl / Thrips", lat: 19.8500, lon: 74.0100, location: "Sinnar Border", severity: "medium", cases: 14, advice: "Install yellow and blue sticky traps across field perimeter to monitor vector entry." },
@@ -54,3 +54,40 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch community outbreak alerts" }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { crop, disease, severity, lat, lon, location, advice } = body;
+
+    if (!crop || !disease) {
+      return NextResponse.json({ error: "Crop and disease are required" }, { status: 400 });
+    }
+
+    const latNum = Number(lat) || 19.9975 + (Math.random() - 0.5) * 0.15; // default near Nashik
+    const lonNum = Number(lon) || 73.7898 + (Math.random() - 0.5) * 0.15;
+
+    const newOutbreak = {
+      id: `c-${Date.now()}`,
+      crop,
+      disease,
+      lat: latNum,
+      lon: lonNum,
+      location: location || "Nearby Farm Cluster",
+      severity: severity || "medium",
+      cases: 1,
+      advice: advice || `Outbreak of ${disease} in ${crop} detected. Clean tools and monitor moisture.`
+    };
+
+    REGIONAL_OUTBREAK_CLUSTERS.unshift(newOutbreak);
+
+    return NextResponse.json({
+      success: true,
+      alert: newOutbreak
+    });
+  } catch (err: any) {
+    console.error("Failed to post outbreak:", err);
+    return NextResponse.json({ error: "Failed to report outbreak" }, { status: 500 });
+  }
+}
+

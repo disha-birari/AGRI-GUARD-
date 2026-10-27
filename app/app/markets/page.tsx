@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, MapPin, IndianRupee, BarChart3, Navigation, Flame, Eye, Truck, ArrowUpRight, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, MapPin, IndianRupee, BarChart3, Navigation, Flame, Eye, Truck, ArrowUpRight, RefreshCw, Bell, BellRing, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
+import { toast } from "sonner";
 import { MARKETS } from "@/lib/data";
 import { PJS, MRP, shadow } from "@/lib/ds";
 
@@ -23,6 +24,89 @@ export default function MandiPro() {
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number }>({ lat: 19.9975, lon: 73.7898 });
+
+  // Ticker rates & alerts state
+  const [tickerRates, setTickerRates] = useState<any[]>([
+    { crop: "Tomato", mandi: "Vashi APMC", price: 3100, change: 240 },
+    { crop: "Onion", mandi: "Pimpalgaon", price: 2980, change: 160 },
+    { crop: "Wheat", mandi: "Lasalgaon", price: 2920, change: 110 },
+    { crop: "Capsicum", mandi: "Pune APMC", price: 4120, change: 350 },
+    { crop: "Grapes", mandi: "Nashik APMC", price: 8400, change: -120 }
+  ]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alertTargetPrice, setAlertTargetPrice] = useState(3150);
+
+  // EV Dispatch booking states
+  const [bookingState, setBookingState] = useState<"idle" | "requesting" | "assigned" | "enroute">("idle");
+  const [bookingEta, setBookingEta] = useState(8);
+
+  // Price fluctuations & Alert trigger checker
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTickerRates(prev => prev.map(rate => {
+        const delta = Math.floor((Math.random() - 0.45) * 40); // slightly positive
+        const nextPrice = rate.price + delta;
+
+        // Check alerts
+        alerts.forEach(alert => {
+          if (alert.crop === rate.crop && !alert.fired) {
+            if (nextPrice >= alert.targetPrice) {
+              alert.fired = true;
+              toast.success(`📈 PRICE ALERT HIT: ${rate.crop} at ${rate.mandi} surged to ₹${nextPrice}/qtl (Target: ₹${alert.targetPrice})!`);
+            }
+          }
+        });
+
+        return {
+          ...rate,
+          price: nextPrice,
+          change: rate.change + delta
+        };
+      }));
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [alerts]);
+
+  // Simulated countdown for EV truck arrival
+  useEffect(() => {
+    if (bookingState !== "enroute") return;
+    const interval = setInterval(() => {
+      setBookingEta(eta => {
+        if (eta <= 1) {
+          clearInterval(interval);
+          setBookingState("idle");
+          toast.success("🚚 EV Transport Arrival: Driver Balwinder Singh has arrived at Igatpuri plot to load crop!");
+          return 0;
+        }
+        return eta - 1;
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [bookingState]);
+
+  const handleAddAlert = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newAlert = {
+      id: `alert-${Date.now()}`,
+      crop: crop,
+      targetPrice: alertTargetPrice,
+      fired: false
+    };
+    setAlerts(prev => [...prev, newAlert]);
+    toast.success(`🔔 SMS Alert target set for ${crop} at ₹${alertTargetPrice}/qtl!`);
+  };
+
+  const startLogisticsBooking = () => {
+    setBookingState("requesting");
+    setTimeout(() => {
+      setBookingState("assigned");
+      setTimeout(() => {
+        setBookingState("enroute");
+      }, 3000);
+    }, 3000);
+  };
 
   // Get user GPS
   useEffect(() => {
@@ -117,16 +201,69 @@ export default function MandiPro() {
       </div>
 
       {/* Crop selector */}
-      <div style={{ marginBottom: 20, background: d.card, border: `1px solid ${d.border}`, borderRadius: 14, padding: 18, boxShadow: shadow(isDark, 1) }}>
-        <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 12, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>
-          Select Harvest Crop
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {CROPS_LIST.map(c => (
-            <button key={c} onClick={() => setCrop(c)} style={{ padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${crop === c ? "#c4501a" : d.border}`, background: crop === c ? "rgba(196,80,26,0.1)" : "transparent", color: crop === c ? "#c4501a" : d.textSub, fontFamily: MRP, fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "all 0.15s" }}>
-              {c}
+      {/* Live scrolling commodity price watcher */}
+      <div style={{ background: "#1c0f05", border: "1.5px solid #c4501a", borderRadius: 10, padding: "8px 16px", marginBottom: 20, overflow: "hidden", display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: PJS, fontWeight: 900, fontSize: 10, color: "#fff", background: "#c4501a", padding: "3px 8px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
+          Live Mandi Rates
+        </span>
+        <div style={{ display: "flex", gap: 24, overflowX: "hidden", flex: 1, whiteSpace: "nowrap" }}>
+          <div style={{ display: "inline-flex", gap: 24, animation: "marquee 25s linear infinite" }} className="flex animate-pulse">
+            {tickerRates.map((rate, i) => (
+              <span key={i} style={{ fontFamily: MRP, fontSize: 12, color: "#ffb599" }}>
+                🌾 {rate.crop} ({rate.mandi}): <strong>₹{rate.price}/qtl</strong>
+                <span style={{ marginLeft: 6, color: rate.change > 0 ? "#7abe8b" : "#ba1a1a" }}>
+                  {rate.change > 0 ? "▲" : "▼"} {Math.abs(rate.change)}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 20 }}>
+        {/* Crop Selector Card */}
+        <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 14, padding: 18, boxShadow: shadow(isDark, 1) }}>
+          <p style={{ fontFamily: MRP, fontWeight: 700, fontSize: 12, color: d.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>
+            Select Harvest Crop
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {CROPS_LIST.map(c => (
+              <button key={c} onClick={() => setCrop(c)} style={{ padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${crop === c ? "#c4501a" : d.border}`, background: crop === c ? "rgba(196,80,26,0.1)" : "transparent", color: crop === c ? "#c4501a" : d.textSub, fontFamily: MRP, fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "all 0.15s" }}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Real-time price alerts card */}
+        <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 14, padding: 18, boxShadow: shadow(isDark, 1) }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <Bell size={15} color="#c4501a" />
+            <p style={{ fontFamily: PJS, fontWeight: 800, fontSize: 13, color: d.text, margin: 0, textTransform: "uppercase" }}>Configure Mandi Price Alert</p>
+          </div>
+          <form onSubmit={handleAddAlert} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted }}>Target Price (₹/qtl) for {crop}</label>
+              <input 
+                type="number" 
+                value={alertTargetPrice} 
+                onChange={e => setAlertTargetPrice(Number(e.target.value))}
+                style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: `1px solid ${d.border}`, background: d.bgMuted, color: d.text, fontFamily: MRP, fontSize: 12, marginTop: 4, boxSizing: "border-box" }} 
+              />
+            </div>
+            <button type="submit" style={{ padding: "8px 14px", borderRadius: 8, background: "#c4501a", color: "#fff", border: "none", fontFamily: PJS, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+              Set Alert
             </button>
-          ))}
+          </form>
+          {alerts.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {alerts.map(a => (
+                <span key={a.id} style={{ fontFamily: MRP, fontSize: 10, padding: "2px 8px", borderRadius: 4, background: a.fired ? "rgba(69,99,72,0.12)" : d.bgAlt, border: `1px solid ${a.fired ? "#456348" : d.border}`, color: a.fired ? "#456348" : d.textSub }}>
+                  {a.fired ? "✓ Fired" : "🔔 Active"}: {a.crop} @ ₹{a.targetPrice}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -286,28 +423,52 @@ export default function MandiPro() {
             </div>
 
             {/* Navigate & Sell Action Button */}
-            <button 
-              onClick={() => openNavigation(activeBest)}
-              style={{ 
-                width: "100%", 
-                padding: "12px", 
-                borderRadius: 10, 
-                background: "#c4501a", 
-                color: "#fff", 
-                border: "none", 
-                fontFamily: PJS, 
-                fontWeight: 800, 
-                fontSize: 14, 
-                cursor: "pointer", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                gap: 8,
-                boxShadow: "0 4px 15px rgba(196,80,26,0.35)"
-              }}
-            >
-              <Navigation size={16} />Step 4: Navigate & Sell (Open GPS Map) <ArrowUpRight size={16} />
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button 
+                onClick={() => openNavigation(activeBest)}
+                style={{ 
+                  width: "100%", 
+                  padding: "11px", 
+                  borderRadius: 10, 
+                  background: "transparent", 
+                  color: d.text, 
+                  border: `1.5px solid ${d.border}`, 
+                  fontFamily: PJS, 
+                  fontWeight: 700, 
+                  fontSize: 13, 
+                  cursor: "pointer", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  gap: 6,
+                }}
+              >
+                <Navigation size={14} />Step 4: Open GPS Maps for Delivery
+              </button>
+
+              <button 
+                onClick={startLogisticsBooking}
+                style={{ 
+                  width: "100%", 
+                  padding: "12px", 
+                  borderRadius: 10, 
+                  background: "#c4501a", 
+                  color: "#fff", 
+                  border: "none", 
+                  fontFamily: PJS, 
+                  fontWeight: 800, 
+                  fontSize: 14, 
+                  cursor: "pointer", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  gap: 8,
+                  boxShadow: "0 4px 15px rgba(196,80,26,0.35)"
+                }}
+              >
+                <Truck size={16} />Book Express EV Logistics Truck →
+              </button>
+            </div>
           </div>
 
           {/* Harvest Profit Calculator */}
@@ -363,6 +524,76 @@ export default function MandiPro() {
         </div>
 
       </div>
+
+      {/* EV LOGISTICS DISPATCH MODAL TRACKER */}
+      {bookingState !== "idle" && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
+          <div style={{ background: d.card, border: `1px solid ${d.border}`, borderRadius: 18, width: "100%", maxWidth: 460, padding: 24, boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <span style={{ fontFamily: MRP, fontWeight: 800, fontSize: 10, color: "#c4501a", textTransform: "uppercase" }}>AgriGuard Express Logistics</span>
+                <h2 style={{ fontFamily: PJS, fontWeight: 800, fontSize: 18, color: d.text, margin: "2px 0 0" }}>EV Logistics Fleet Dispatch</h2>
+              </div>
+              {bookingState !== "requesting" && (
+                <button onClick={() => setBookingState("idle")} style={{ background: "transparent", border: "none", color: d.textMuted, fontSize: 16, cursor: "pointer" }}>✕</button>
+              )}
+            </div>
+
+            {/* Steps Visualizer */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              
+              {/* Step 1: Broadcasting */}
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", opacity: bookingState === "requesting" ? 1 : 0.6 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: bookingState === "requesting" ? "rgba(196,80,26,0.12)" : "rgba(69,99,72,0.12)", border: `1.5px solid ${bookingState === "requesting" ? "#c4501a" : "#456348"}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PJS, fontWeight: 800, fontSize: 10, color: bookingState === "requesting" ? "#c4501a" : "#456348", flexShrink: 0 }}>
+                  {bookingState !== "requesting" ? "✓" : "1"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 2px" }}>Broadcasting Load Request</p>
+                  <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>Finding nearest eco-friendly electric loader truck...</p>
+                  {bookingState === "requesting" && (
+                    <div style={{ width: "100%", height: 4, borderRadius: 999, background: d.bgMuted, overflow: "hidden", marginTop: 8 }}>
+                      <div style={{ width: "60%", height: "100%", background: "#c4501a", borderRadius: 999, animation: "pulse 1s infinite alternate" }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 2: Driver Assigned */}
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", opacity: (bookingState === "assigned" || bookingState === "enroute") ? 1 : 0.4 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(69,99,72,0.12)", border: `1.5px solid ${bookingState === "requesting" ? d.border : "#456348"}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PJS, fontWeight: 800, fontSize: 10, color: "#456348", flexShrink: 0 }}>
+                  {(bookingState === "enroute") ? "✓" : "2"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 2px" }}>EV Truck Assigned</p>
+                  <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>
+                    Driver: <strong>Balwinder Singh (MH-15-EV-8420)</strong> · Tata Ace EV (88% Battery)
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3: En route */}
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", opacity: bookingState === "enroute" ? 1 : 0.4 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(196,80,26,0.12)", border: `1.5px solid ${bookingState === "enroute" ? "#c4501a" : d.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: PJS, fontWeight: 800, fontSize: 10, color: "#c4501a", flexShrink: 0 }}>
+                  3
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: PJS, fontWeight: 700, fontSize: 13, color: d.text, margin: "0 0 2px" }}>En Route to Igatpuri Plot</p>
+                  <p style={{ fontFamily: MRP, fontSize: 11, color: d.textMuted, margin: 0 }}>
+                    Arriving to load {weight}kg harvest in <strong>{bookingEta} minutes</strong>.
+                  </p>
+                  {bookingState === "enroute" && (
+                    <div style={{ marginTop: 8, padding: 8, borderRadius: 6, background: "rgba(69,99,72,0.06)", border: "1px dashed rgba(69,99,72,0.25)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontFamily: MRP, fontSize: 11, color: "#456348" }}>Estimated pickup:</span>
+                      <strong style={{ fontFamily: PJS, fontSize: 12, color: "#456348" }}>{new Date(Date.now() + bookingEta * 60000).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

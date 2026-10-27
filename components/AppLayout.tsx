@@ -25,6 +25,7 @@ const FARMER_NAV: NavItem[] = [
   { label: "Glut Early Warning", path: "/app/glut-forecast", icon: TrendingDown, badge: "AI", badgeCol: "#ba1a1a" },
   { label: "Krishi-Share Rent",  path: "/app/machinery",     icon: Tractor },
   { label: "Smart Drip Ledger",  path: "/app/irrigation",    icon: Droplets },
+  { label: "Expert Consult",     path: "/app/consultation",  icon: Users, badge: "Live", badgeCol: "#c4501a" },
   { label: "Crop Loss Claim",    path: "/app/insurance",     icon: ShieldAlert },
   { label: "Digital Doctor",     path: "/app/scanner",       icon: Camera },
   { label: "Agri-Voice",         path: "/app/voice",         icon: Mic },
