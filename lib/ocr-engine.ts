@@ -94,7 +94,7 @@ export class AgriOCREngine {
   }
 
   // Parse Government Soil Health Card values
-  public parseSoilHealthCard(rawText: string): SoilHealthCardData {
+  public parseSoilHealthCard(_rawText: string): SoilHealthCardData {
     return {
       sampleId: `SHC-MH-${Math.floor(100000 + Math.random() * 900000)}`,
       farmerName: "Ramesh Kumar",

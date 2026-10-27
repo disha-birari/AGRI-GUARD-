@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Leaf, Camera, Mic, TrendingUp, CheckCircle, ArrowRight, Star, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
+import Image from "next/image";
 
 function RevealOnScroll({ children, delay = 0, y = 24 }: { children: React.ReactNode; delay?: number; y?: number }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -376,9 +377,11 @@ export default function Landing() {
 
             {/* right — produce image with floating card */}
             <div className="hero-img-container" style={{ position:"relative", borderRadius:20, overflow:"hidden", border:`1px solid ${d.border}`, boxShadow:shadow(isDark,3), animation: "heroSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both" }}>
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=680&h=460&fit=crop&auto=format"
                 alt="Fresh farm produce — vegetables and crops"
+                width={680}
+                height={380}
                 style={{ width:"100%", height:380, objectFit:"cover", display:"block" }}
               />
               <div style={{ position:"absolute",inset:0,background:`linear-gradient(to top,${d.bg} 0%,transparent 50%)` }}/>

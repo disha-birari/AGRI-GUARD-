@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect, type DragEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, ArrowRight, ShieldCheck, Clock, CloudRain, IndianRupee, Radar } from "lucide-react";
+import { Upload, Camera, CheckCircle, AlertTriangle, RefreshCw, Save, UserCheck, Sprout, FlaskConical, Clock, CloudRain, IndianRupee, Radar } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, useTheme } from "@/lib/context";
 import { db } from "@/lib/db";
 import { PJS, MRP, shadow } from "@/lib/ds";
 import { DISEASE_KNOWLEDGE } from "@/lib/data";
+import Image from "next/image";
 
 interface ScanResult {
   crop: string;
@@ -152,12 +153,12 @@ export default function DigitalDoctorScanner() {
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
-  };
+  }, [stream]);
 
   useEffect(() => {
     if (stream && videoRef.current) {
@@ -170,7 +171,7 @@ export default function DigitalDoctorScanner() {
       stopCamera();
     }
     return () => stopCamera();
-  }, [tab]);
+  }, [tab, stopCamera]);
 
   const capturePhoto = () => {
     if (videoRef.current) {
@@ -342,6 +343,7 @@ export default function DigitalDoctorScanner() {
             
             {image ? (
               <div style={{ position: "relative", width: "100%", height: 300 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={image} alt="Crop Leaf" style={{ width: "100%", height: 300, objectFit: "cover", display: "block" }} />
                 <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   {!scanning && !result && (
@@ -419,7 +421,7 @@ export default function DigitalDoctorScanner() {
                 ].map((s, i) => (
                   <button key={i} onClick={() => { setImage(`https://images.unsplash.com/${s.id}?w=400&h=300&fit=crop&auto=format`); setResult(null); setSaved(false); setErrorText(""); }} 
                     style={{ flex: 1, padding: 6, border: `1.5px solid ${d.border}`, borderRadius: 10, background: d.card, cursor: "pointer", textAlign: "center" }}>
-                    <img src={`https://images.unsplash.com/${s.id}?w=120&h=80&fit=crop&auto=format`} alt="" style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 6, marginBottom: 4 }} />
+                    <Image src={`https://images.unsplash.com/${s.id}?w=120&h=80&fit=crop&auto=format`} alt="" width={120} height={50} style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 6, marginBottom: 4 }} />
                     <p style={{ fontFamily: MRP, fontSize: 10, fontWeight: 700, color: d.textSub, margin: 0 }}>{s.label}</p>
                   </button>
                 ))}

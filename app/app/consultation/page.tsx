@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { 
-  Users, Send, Phone, ShieldCheck, Sparkles, MessageSquare, 
-  Sprout, Paperclip, ChevronRight, Mic, AlertCircle, Bot
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Send, Phone, ShieldCheck, Sparkles,
+  Sprout, Paperclip
 } from "lucide-react";
 import { useAuth, useTheme } from "@/lib/context";
 import { PJS, MRP, shadow } from "@/lib/ds";
-import { db } from "@/lib/db";
 
 export default function ConsultationPage() {
   const { d, isDark } = useTheme();
@@ -16,7 +15,7 @@ export default function ConsultationPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   
   // New Consult Form Context
   const [crop, setCrop] = useState("Tomato");
@@ -31,7 +30,7 @@ export default function ConsultationPage() {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch("/api/chat");
       if (res.ok) {
@@ -43,14 +42,14 @@ export default function ConsultationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Poll chat messages every 2 seconds
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchMessages]);
 
   useEffect(() => {
     scrollToBottom();

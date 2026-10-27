@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { ElementType } from "react";
-import { CloudRain, TrendingUp, AlertTriangle, CheckCircle, Bell, BellOff, Radar, ShieldAlert, MapPin, ArrowRight, Home } from "lucide-react";
+import { CloudRain, TrendingUp, AlertTriangle, CheckCircle, BellOff, Radar, MapPin, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth, useTheme } from "@/lib/context";
@@ -27,7 +27,7 @@ export default function NotificationsAndCommunityAlerts() {
   const [filter, setFilter] = useState<Filter>("all");
   const [notifs, setNotifs] = useState<any[]>([]);
   const [communityAlerts, setCommunityAlerts] = useState<any[]>(COMMUNITY_ALERTS);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [userCoords, setUserCoords] = useState({ lat: 19.9975, lon: 73.7898 });
   const [hoveredAlert, setHoveredAlert] = useState<any | null>(null);
 
@@ -237,7 +237,7 @@ export default function NotificationsAndCommunityAlerts() {
                 const cx = 100 + x;
                 const cy = 100 - y; // SVG y points down
 
-                const isHovered = hoveredAlert?.id === alert.id;
+                const _isHovered = hoveredAlert?.id === alert.id;
 
                 return (
                   <div 
